@@ -14,7 +14,8 @@ let animation
 let resizeTimer
 let secondsPassed
 let oldTimeStamp = 0
-const turretNumber = 5
+let turretNumber = 5 // increase turret number/projectile number with duration/score
+let maxProjectiles = 50
 let turrets = []
 let projectiles = []
 
@@ -72,11 +73,11 @@ class Turret {
   }
 
   fire() {
-    const numProjectiles = Math.floor(Math.random() * 20) + 1 // random number of projectiles spawned for each turret, 10 to 20
+    const numProjectiles = Math.floor(Math.random() * 20) + 30 // random number of projectiles spawned for each turret, 30 to 50
     for (let i=0; i < numProjectiles; i++) {
 			const slice = 2 * Math.PI / numProjectiles;
 			const angle = slice * i;
-      // each projectile normalized vector equally spaced around circle
+      // each projectile gets normalized vector equally spaced around unit circle
       projectiles.push(new Projectile(this.x, this.y, Math.sin(angle), Math.cos(angle)))
     }
   }
@@ -89,8 +90,32 @@ function init() {
   ctx = canvas.getContext('2d')
   canvas.width = window.innerWidth
   canvas.height = window.innerHeight
+  
+  ctx.font = `${canvas.width * 0.02}px Arial`
+  ctx.textBaseline = 'middle'
+  ctx.textAlign = 'center'
+  ctx.fillStyle = 'white'
+  ctx.strokeStyle = 'white'
+
+  const menuText = 'PRESS SPACE TO START'
+
+  ctx.save()
+  ctx.translate(canvas.width/2, canvas.height/2)
+  ctx.fillText(menuText, 0, 0)
+  ctx.restore()
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === ' ') {
+      endGame()
+      reset()
+      startGame()
+    }
+  })
+}
+
+function startGame() {
   mouse.x = canvas.width/2
-  mouse.y = canvas.width/2
+  mouse.y = canvas.height/2
 
   for (let i=0; i < turretNumber; i++) {
     turrets.push(new Turret())
@@ -99,10 +124,14 @@ function init() {
   animate()
 }
 
-window.addEventListener('resize', function() {
-  // cancel animation on resize and clear the canvas, then debounce restarting the animation
+function endGame() {
   cancelAnimationFrame(animation)
   ctx.clearRect(0, 0, canvas.width, canvas.height)
+}
+
+window.addEventListener('resize', function() {
+  // cancel animation on resize and clear the canvas, then debounce restarting the animation
+  endGame()
   clearTimeout(resizeTimer)
   resizeTimer = setTimeout(function() {
     reset()
