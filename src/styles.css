@@ -1,3 +1,7 @@
+* {
+  cursor: none;
+}
+
 #canvas1 {
   position: absolute;
   background: black;

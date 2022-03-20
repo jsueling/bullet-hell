@@ -10,14 +10,15 @@ import './styles.css'
 const mouse = { x: 0, y: 0 }
 let canvas
 let ctx
-let animation
-let resizeTimer
+let animationID
+let resizeTimerID
 let secondsPassed
 let oldTimeStamp = 0
 let turretNumber = 5 // increase turret number/projectile number with duration/score
 let maxProjectiles = 50
 let turrets = []
 let projectiles = []
+let score = 0
 
 class Projectile {
   constructor(x, y, velX, velY) {
@@ -47,7 +48,7 @@ class Projectile {
 class Turret {
   constructor() {
     this.radius = canvas.height * 0.005
-    this.x = this.radius + Math.random() * (canvas.width - 2 * this.radius) // min: this.radius, max: canvas.width - this.radius
+    this.x = this.radius + Math.random() * (canvas.width - 2 * this.radius) // always starts with its full diameter inside the box view
     this.y = 0
     this.velX = 0
     this.velY = canvas.height * (Math.random() * 0.001 + 0.001) // velocity varying between 0.1 to 0.2 % of canvas height
@@ -65,7 +66,8 @@ class Turret {
 
   update() {
     this.y += this.velY
-    if (this.y > canvas.height) { // OOB reset
+
+    if (this.y > canvas.height) { // OOB reset turret to top of screen
       this.x = Math.random() * canvas.width
       this.y = 0
       this.velY = canvas.height * (Math.random() * 0.001 + 0.001)
@@ -84,6 +86,21 @@ class Turret {
 }
 
 window.addEventListener('onload', init())
+
+window.addEventListener('resize', function() {
+  // cancel animation on resize and clear the canvas, then debounce restarting the animation
+  endGame()
+  clearTimeout(resizeTimerID)
+  resizeTimerID = setTimeout(function() {
+    reset()
+    init()
+  }, 200)
+})
+
+window.addEventListener('mousemove', function(e) {
+  mouse.x = e.x
+  mouse.y = e.y
+})
 
 function init() {
   canvas = document.getElementById('canvas1')
@@ -104,16 +121,20 @@ function init() {
   ctx.fillText(menuText, 0, 0)
   ctx.restore()
 
-  document.addEventListener('keydown', function(e) {
-    if (e.key === ' ') {
-      endGame()
-      reset()
-      startGame()
-    }
-  })
+  document.addEventListener('keydown', spaceBarListener)
+}
+
+function spaceBarListener(e) {
+  if (e.key === ' ') {
+    endGame()
+    reset()
+    startGame()
+  }
 }
 
 function startGame() {
+  document.removeEventListener('keydown', spaceBarListener)
+
   mouse.x = canvas.width/2
   mouse.y = canvas.height/2
 
@@ -125,62 +146,53 @@ function startGame() {
 }
 
 function endGame() {
-  cancelAnimationFrame(animation)
+  cancelAnimationFrame(animationID)
   ctx.clearRect(0, 0, canvas.width, canvas.height)
 }
-
-window.addEventListener('resize', function() {
-  // cancel animation on resize and clear the canvas, then debounce restarting the animation
-  endGame()
-  clearTimeout(resizeTimer)
-  resizeTimer = setTimeout(function() {
-    reset()
-    init()
-  }, 200)
-})
 
 function reset() {
   turrets = []
   projectiles = []
+  score = 0
 }
-
-window.addEventListener('mousemove', function(e) {
-  mouse.x = e.x
-  mouse.y = e.y
-})
 
 function animate(timeStamp) {
-  secondsPassed = (timeStamp - oldTimeStamp) / 1000; // seconds passed since last frame
-  
-  draw()
-
-  turrets.forEach((turret) => { // update and render turrets
-    turret.update()
-    turret.draw()
-  })
-
-  if (secondsPassed > 5) { // create/fire projectiles every 5 seconds
-    turrets.forEach((turret) => {
-      turret.fire()
-    })
-    oldTimeStamp = timeStamp
-  }
-
-  projectiles.forEach((projectile) => { // update and render projectiles
-    projectile.update()
-    projectile.draw()
-  })
-
-  animation = window.requestAnimationFrame(animate)
-}
-
-function draw() {
   ctx.save()
   // ctx.fillStyle = 'rgba(0, 0, 0, 0.1)' // cheap trail effect
   // ctx.fillRect(0, 0, canvas.width, canvas.height)
   ctx.clearRect(0, 0, canvas.width, canvas.height)
   ctx.restore()
 
+  secondsPassed = (timeStamp - oldTimeStamp) / 1000; // seconds passed since last frame
+
+  drawCursor()
+
+  turrets.forEach((turret) => { // update and render turrets
+    turret.update()
+    turret.draw()
+  })
+
+  if (secondsPassed > 5) { // create/fire projectiles every 5 seconds, increase with score
+    turrets.forEach((turret) => {
+      turret.fire()
+    })
+    oldTimeStamp = timeStamp
+  }
+
+  for (let i=0; i < projectiles.length; i++) { // update and render projectiles
+    let p = projectiles[i]
+    p.update()
+    p.draw()
+    if (p.x < -p.radius || p.x > canvas.width + p.radius || p.y < -p.radius || p.y > canvas.height + p.radius) { // OOB
+      projectiles.splice(i, 1) // remove projectiles outside of screen
+      i--
+    }
+  }
+
+  animationID = window.requestAnimationFrame(animate)
+}
+
+function drawCursor() {
   ctx.save()
   ctx.fillStyle = 'blue'
   ctx.beginPath()
