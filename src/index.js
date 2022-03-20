@@ -4,10 +4,10 @@ import './styles.css'
 
 /**
  * use circle projectiles and hitboxes to simplify collision detection and improve performance
- * x distance between any 2 projectiles must be large enough at some point for the ship to pass
+ * x distance between any 2 projectiles must be large enough at some point for the CursorObject to pass
  */
 
-const mouse = { x: 0, y: 0 }
+let cursor
 let canvas
 let ctx
 let animationID
@@ -32,7 +32,7 @@ class Projectile {
   draw() {
     ctx.save()
     ctx.translate(this.x, this.y)
-    ctx.fillStyle = 'white'
+    ctx.fillStyle = 'green'
     ctx.beginPath()
     ctx.arc(0, 0, this.radius, 0, 2 * Math.PI)
     ctx.fill()
@@ -42,6 +42,32 @@ class Projectile {
   update() {
     this.x += this.velX
     this.y += this.velY
+  }
+}
+
+class CursorObject {
+  constructor() {
+    this.x = 0
+    this.y = 0
+    this.radius = canvas.height * 0.02
+  }
+
+  draw() {
+    ctx.save()
+    ctx.fillStyle = 'blue'
+    ctx.beginPath()
+    ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI)
+    ctx.fill()
+    ctx.restore()
+  }
+
+  collidesWith(object) { // returns boolean based on whether CursorObject circle collision with object
+    const dx = object.x - this.x
+    const dy = object.y - this.y
+    if (dx**2 + dy**2 < (this.radius + object.radius)**2) {
+      return true
+    }
+    return false
   }
 }
 
@@ -85,7 +111,9 @@ class Turret {
   }
 }
 
-window.addEventListener('onload', init())
+window.onload = function() {
+  init()
+}
 
 window.addEventListener('resize', function() {
   // cancel animation on resize and clear the canvas, then debounce restarting the animation
@@ -97,16 +125,17 @@ window.addEventListener('resize', function() {
   }, 200)
 })
 
-window.addEventListener('mousemove', function(e) {
-  mouse.x = e.x
-  mouse.y = e.y
-})
-
 function init() {
   canvas = document.getElementById('canvas1')
   ctx = canvas.getContext('2d')
   canvas.width = window.innerWidth
   canvas.height = window.innerHeight
+  cursor = new CursorObject() // CursorObject size is responsive to canvas height and width
+  
+  window.addEventListener('mousemove', function(e) {
+    cursor.x = e.x
+    cursor.y = e.y
+  })
   
   ctx.font = `${canvas.width * 0.02}px Arial`
   ctx.textBaseline = 'middle'
@@ -114,6 +143,10 @@ function init() {
   ctx.fillStyle = 'white'
   ctx.strokeStyle = 'white'
 
+  startMenu()
+}
+
+function startMenu() {
   const menuText = 'PRESS SPACE TO START'
 
   ctx.save()
@@ -126,8 +159,6 @@ function init() {
 
 function spaceBarListener(e) {
   if (e.key === ' ') {
-    endGame()
-    reset()
     startGame()
   }
 }
@@ -135,8 +166,8 @@ function spaceBarListener(e) {
 function startGame() {
   document.removeEventListener('keydown', spaceBarListener)
 
-  mouse.x = canvas.width/2
-  mouse.y = canvas.height/2
+  cursor.x = canvas.width/2
+  cursor.y = canvas.height/2
 
   for (let i=0; i < turretNumber; i++) {
     turrets.push(new Turret())
@@ -147,7 +178,9 @@ function startGame() {
 
 function endGame() {
   cancelAnimationFrame(animationID)
-  ctx.clearRect(0, 0, canvas.width, canvas.height)
+  if (ctx) {
+    ctx.clearRect(0, 0, canvas.width, canvas.height)
+  }
 }
 
 function reset() {
@@ -158,14 +191,14 @@ function reset() {
 
 function animate(timeStamp) {
   ctx.save()
-  // ctx.fillStyle = 'rgba(0, 0, 0, 0.1)' // cheap trail effect
+  // ctx.fillStyle = 'rgba(0, 0, 0, 0.3)' // cheap trail effect
   // ctx.fillRect(0, 0, canvas.width, canvas.height)
   ctx.clearRect(0, 0, canvas.width, canvas.height)
   ctx.restore()
 
   secondsPassed = (timeStamp - oldTimeStamp) / 1000; // seconds passed since last frame
 
-  drawCursor()
+  cursor.draw()
 
   turrets.forEach((turret) => { // update and render turrets
     turret.update()
@@ -182,6 +215,14 @@ function animate(timeStamp) {
   for (let i=0; i < projectiles.length; i++) { // update and render projectiles
     let p = projectiles[i]
     p.update()
+
+    if (cursor.collidesWith(p)) {
+      endGame()
+      reset()
+      startMenu()
+      return
+    }
+
     p.draw()
     if (p.x < -p.radius || p.x > canvas.width + p.radius || p.y < -p.radius || p.y > canvas.height + p.radius) { // OOB
       projectiles.splice(i, 1) // remove projectiles outside of screen
@@ -190,13 +231,4 @@ function animate(timeStamp) {
   }
 
   animationID = window.requestAnimationFrame(animate)
-}
-
-function drawCursor() {
-  ctx.save()
-  ctx.fillStyle = 'blue'
-  ctx.beginPath()
-  ctx.arc(mouse.x, mouse.y, canvas.height * 0.02, 0, 2 * Math.PI)
-  ctx.fill()
-  ctx.restore()
 }
