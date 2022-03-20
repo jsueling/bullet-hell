@@ -10,25 +10,27 @@ import './styles.css'
 const mouse = { x: 0, y: 0 }
 let canvas
 let ctx
+let animation
+let resizeTimer
 let secondsPassed
 let oldTimeStamp = 0
 const turretNumber = 5
-const turrets = []
-const projectiles = []
+let turrets = []
+let projectiles = []
 
 class Projectile {
   constructor(x, y, velX, velY) {
     this.x = x
     this.y = y
-    this.velX = velX
-    this.velY = velY
-    this.radius = 5
+    this.velX = velX * (canvas.height + canvas.width) * 0.001 // add magnitude to the normalized vectors depending on canvas height and width
+    this.velY = velY * (canvas.height + canvas.width) * 0.001
+    this.radius = canvas.height * 0.005
   }
 
   draw() {
     ctx.save()
     ctx.translate(this.x, this.y)
-    ctx.fillStyle = 'green'
+    ctx.fillStyle = 'white'
     ctx.beginPath()
     ctx.arc(0, 0, this.radius, 0, 2 * Math.PI)
     ctx.fill()
@@ -43,11 +45,11 @@ class Projectile {
 
 class Turret {
   constructor() {
-    this.radius = 20
+    this.radius = canvas.height * 0.005
     this.x = this.radius + Math.random() * (canvas.width - 2 * this.radius) // min: this.radius, max: canvas.width - this.radius
     this.y = 0
     this.velX = 0
-    this.velY = Math.random() * 1.5 + 0.5 // 0.5-2.5 speed down
+    this.velY = canvas.height * (Math.random() * 0.001 + 0.001) // velocity varying between 0.1 to 0.2 % of canvas height
   }
 
   draw() {
@@ -65,15 +67,16 @@ class Turret {
     if (this.y > canvas.height) { // OOB reset
       this.x = Math.random() * canvas.width
       this.y = 0
-      this.velY = Math.random() * 1.5 + 0.5
+      this.velY = canvas.height * (Math.random() * 0.001 + 0.001)
     }
   }
 
   fire() {
-    const numProjectiles = Math.random() * 5 + 5 // 5 to 10 random number of projectiles spawned
+    const numProjectiles = Math.floor(Math.random() * 20) + 1 // random number of projectiles spawned for each turret, 10 to 20
     for (let i=0; i < numProjectiles; i++) {
 			const slice = 2 * Math.PI / numProjectiles;
 			const angle = slice * i;
+      // each projectile normalized vector equally spaced around circle
       projectiles.push(new Projectile(this.x, this.y, Math.sin(angle), Math.cos(angle)))
     }
   }
@@ -93,15 +96,24 @@ function init() {
     turrets.push(new Turret())
   }
 
-  window.requestAnimationFrame(animate)
+  animate()
 }
 
 window.addEventListener('resize', function() {
-  canvas.width = window.innerWidth
-  canvas.height = window.innerHeight
-
-  window.requestAnimationFrame(animate)
+  // cancel animation on resize and clear the canvas, then debounce restarting the animation
+  cancelAnimationFrame(animation)
+  ctx.clearRect(0, 0, canvas.width, canvas.height)
+  clearTimeout(resizeTimer)
+  resizeTimer = setTimeout(function() {
+    reset()
+    init()
+  }, 200)
 })
+
+function reset() {
+  turrets = []
+  projectiles = []
+}
 
 window.addEventListener('mousemove', function(e) {
   mouse.x = e.x
@@ -118,8 +130,10 @@ function animate(timeStamp) {
     turret.draw()
   })
 
-  if (secondsPassed > 5) { // create projectiles every 5 seconds
-    turrets.forEach((t) => t.fire())
+  if (secondsPassed > 5) { // create/fire projectiles every 5 seconds
+    turrets.forEach((turret) => {
+      turret.fire()
+    })
     oldTimeStamp = timeStamp
   }
 
@@ -128,12 +142,12 @@ function animate(timeStamp) {
     projectile.draw()
   })
 
-  window.requestAnimationFrame(animate)
+  animation = window.requestAnimationFrame(animate)
 }
 
 function draw() {
   ctx.save()
-  // ctx.fillStyle = 'rgba(0,0,0,0.3)' // cheap trail effect
+  // ctx.fillStyle = 'rgba(0, 0, 0, 0.1)' // cheap trail effect
   // ctx.fillRect(0, 0, canvas.width, canvas.height)
   ctx.clearRect(0, 0, canvas.width, canvas.height)
   ctx.restore()
@@ -141,7 +155,7 @@ function draw() {
   ctx.save()
   ctx.fillStyle = 'blue'
   ctx.beginPath()
-  ctx.arc(mouse.x, mouse.y, 20, 0, 2 * Math.PI)
+  ctx.arc(mouse.x, mouse.y, canvas.height * 0.02, 0, 2 * Math.PI)
   ctx.fill()
   ctx.restore()
 }
