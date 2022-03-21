@@ -1,24 +1,59 @@
 import './styles.css'
 
-// ctx.globalAlpha = value;
+// using circular Projectile and CursorObject hitboxes to simplify collision detection and improve performance
 
-/**
- * use circle projectiles and hitboxes to simplify collision detection and improve performance
- * x distance between any 2 projectiles must be large enough at some point for the CursorObject to pass
- */
-
-let cursor
 let canvas
 let ctx
 let animationID
 let resizeTimerID
-let secondsPassed
+let elapsedMs
 let oldTimeStamp = 0
-let turretNumber = 5 // increase turret number/projectile number with duration/score
-let maxProjectiles = 50
-let turrets = []
-let projectiles = []
-let score = 0
+
+const gameSettings = {
+  totalTime: 0,
+  turretNumber: 5, // increase turret number/maxProjectile number with duration/score
+  maxProjectiles: 50,
+  reset() {
+    this.score = 0
+    this.turretNumber = 5
+    this.maxProjectiles = 50
+    this.totalTime = 0
+  }
+}
+
+const gameObjects = {
+  turrets: [],
+  projectiles: [],
+  reset() {
+    this.turrets = []
+    this.projectiles = []
+  }
+}
+
+const cursorObject = {
+  x: 0,
+  y: 0,
+  radius: 0,
+  init() {
+    this.radius = canvas.height * 0.01
+  },
+  draw() {
+    ctx.save()
+    ctx.fillStyle = 'blue'
+    ctx.beginPath()
+    ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI)
+    ctx.fill()
+    ctx.restore()
+  },
+  collidesWith(projectile) { // returns boolean based on whether cursorObject circle collision with object
+    const dx = projectile.x - this.x
+    const dy = projectile.y - this.y
+    if (dx**2 + dy**2 < (this.radius + projectile.radius)**2) {
+      return true
+    }
+    return false
+  }
+}
 
 class Projectile {
   constructor(x, y, velX, velY) {
@@ -42,32 +77,6 @@ class Projectile {
   update() {
     this.x += this.velX
     this.y += this.velY
-  }
-}
-
-class CursorObject {
-  constructor() {
-    this.x = 0
-    this.y = 0
-    this.radius = canvas.height * 0.02
-  }
-
-  draw() {
-    ctx.save()
-    ctx.fillStyle = 'blue'
-    ctx.beginPath()
-    ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI)
-    ctx.fill()
-    ctx.restore()
-  }
-
-  collidesWith(object) { // returns boolean based on whether CursorObject circle collision with object
-    const dx = object.x - this.x
-    const dy = object.y - this.y
-    if (dx**2 + dy**2 < (this.radius + object.radius)**2) {
-      return true
-    }
-    return false
   }
 }
 
@@ -106,23 +115,26 @@ class Turret {
 			const slice = 2 * Math.PI / numProjectiles;
 			const angle = slice * i;
       // each projectile gets normalized vector equally spaced around unit circle
-      projectiles.push(new Projectile(this.x, this.y, Math.sin(angle), Math.cos(angle)))
+      gameObjects.projectiles.push(new Projectile(this.x, this.y, Math.sin(angle), Math.cos(angle)))
     }
   }
 }
 
-window.onload = function() {
-  init()
-}
+window.onload = init
 
 window.addEventListener('resize', function() {
   // cancel animation on resize and clear the canvas, then debounce restarting the animation
   endGame()
   clearTimeout(resizeTimerID)
   resizeTimerID = setTimeout(function() {
-    reset()
+    resetGame()
     init()
   }, 200)
+})
+
+window.addEventListener('mousemove', function(e) {
+  cursorObject.x = e.x
+  cursorObject.y = e.y
 })
 
 function init() {
@@ -130,12 +142,8 @@ function init() {
   ctx = canvas.getContext('2d')
   canvas.width = window.innerWidth
   canvas.height = window.innerHeight
-  cursor = new CursorObject() // CursorObject size is responsive to canvas height and width
-  
-  window.addEventListener('mousemove', function(e) {
-    cursor.x = e.x
-    cursor.y = e.y
-  })
+
+  cursorObject.init() // cursorObject size is responsive to canvas height
   
   ctx.font = `${canvas.width * 0.02}px Arial`
   ctx.textBaseline = 'middle'
@@ -166,14 +174,18 @@ function spaceBarListener(e) {
 function startGame() {
   document.removeEventListener('keydown', spaceBarListener)
 
-  cursor.x = canvas.width/2
-  cursor.y = canvas.height/2
+  cursorObject.x = canvas.width/2
+  cursorObject.y = canvas.height/2
 
-  for (let i=0; i < turretNumber; i++) {
-    turrets.push(new Turret())
+  for (let i=0; i < gameSettings.turretNumber; i++) {
+    gameObjects.turrets.push(new Turret())
   }
 
-  animate()
+  // returns DOMHighResTimeStamp which is the same format as the timeStamp passed to the callback of RequestAnimationFrame, animate in this case
+  // https://developer.mozilla.org/en-US/docs/Web/API/window/requestAnimationFrame#parameters
+  oldTimeStamp = performance.now()
+
+  animate(0) // specify the first timestamp passed to animate is 0
 }
 
 function endGame() {
@@ -183,10 +195,19 @@ function endGame() {
   }
 }
 
-function reset() {
-  turrets = []
-  projectiles = []
-  score = 0
+function resetGame() {
+  gameObjects.reset()
+  gameSettings.reset()
+}
+
+function drawScore(elapsedMs) {
+  gameSettings.totalTime += elapsedMs
+  const seconds = Math.round(gameSettings.totalTime/1000)
+  ctx.save()
+  ctx.fillStyle = 'white'
+  ctx.translate(canvas.width * 0.1, canvas.height * 0.1) // score is time in seconds alive
+  ctx.fillText(seconds, 0, 0)
+  ctx.restore()
 }
 
 function animate(timeStamp) {
@@ -196,38 +217,41 @@ function animate(timeStamp) {
   ctx.clearRect(0, 0, canvas.width, canvas.height)
   ctx.restore()
 
-  secondsPassed = (timeStamp - oldTimeStamp) / 1000; // seconds passed since last frame
+  elapsedMs = (timeStamp - oldTimeStamp) // milliseconds passed since last call to animate
+  oldTimeStamp = timeStamp
 
-  cursor.draw()
+  cursorObject.draw()
+  drawScore(elapsedMs)
 
-  turrets.forEach((turret) => { // update and render turrets
+  gameObjects.turrets.forEach((turret) => { // update and render turrets
     turret.update()
     turret.draw()
   })
 
-  if (secondsPassed > 5) { // create/fire projectiles every 5 seconds, increase with score
-    turrets.forEach((turret) => {
+  if (elapsedMs > 5000) { // TODO create/fire projectiles every 5 seconds, increase with score
+    gameObjects.turrets.forEach((turret) => {
       turret.fire()
     })
-    oldTimeStamp = timeStamp
   }
 
-  for (let i=0; i < projectiles.length; i++) { // update and render projectiles
-    let p = projectiles[i]
+  for (let i=0; i < gameObjects.projectiles.length; i++) { // update and render projectiles
+    let p = gameObjects.projectiles[i]
     p.update()
 
-    if (cursor.collidesWith(p)) {
+    if (cursorObject.collidesWith(p)) { // check collision of each projectile with cursorObject
       endGame()
-      reset()
+      resetGame()
       startMenu()
       return
     }
 
     p.draw()
+
     if (p.x < -p.radius || p.x > canvas.width + p.radius || p.y < -p.radius || p.y > canvas.height + p.radius) { // OOB
-      projectiles.splice(i, 1) // remove projectiles outside of screen
+      gameObjects.projectiles.splice(i, 1) // remove projectiles outside of screen
       i--
     }
+
   }
 
   animationID = window.requestAnimationFrame(animate)
