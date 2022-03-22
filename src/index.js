@@ -10,11 +10,11 @@ let elapsedMs
 let oldTimeStamp = 0
 
 const gameSettings = {
-  totalTime: 0,
+  totalTime: 0, // window loses focus but score ticks up https://developer.mozilla.org/en-US/docs/Web/API/Window/focus_event
   turretNumber: 5, // increase turret number/maxProjectile number with duration/score
   maxProjectiles: 50,
+  // fireInterval: 5000, // TODO
   reset() {
-    this.score = 0
     this.turretNumber = 5
     this.maxProjectiles = 50
     this.totalTime = 0
@@ -29,6 +29,8 @@ const gameObjects = {
     this.projectiles = []
   }
 }
+
+// const gameTimers = {} // TODO
 
 const cursorObject = {
   x: 0,
@@ -87,6 +89,7 @@ class Turret {
     this.y = 0
     this.velX = 0
     this.velY = canvas.height * (Math.random() * 0.001 + 0.001) // velocity varying between 0.1 to 0.2 % of canvas height
+    this.fireTimeoutID = undefined
   }
 
   draw() {
@@ -109,14 +112,19 @@ class Turret {
     }
   }
 
-  fire() {
-    const numProjectiles = Math.floor(Math.random() * 20) + 30 // random number of projectiles spawned for each turret, 30 to 50
+  #fireRadial() {
+    const numProjectiles = Math.round(Math.random() * 5) + 5 // random number of projectiles spawned for each turret, 5 to 10
     for (let i=0; i < numProjectiles; i++) {
 			const slice = 2 * Math.PI / numProjectiles;
 			const angle = slice * i;
       // each projectile gets normalized vector equally spaced around unit circle
       gameObjects.projectiles.push(new Projectile(this.x, this.y, Math.sin(angle), Math.cos(angle)))
     }
+  }
+
+  fireRadialOnce() { // debounce calling turret.fireRadial() binding current Turret instance as the context
+    if (this.fireTimeoutID) clearTimeout(this.fireTimeoutID)
+    this.fireTimeoutID = setTimeout(this.#fireRadial.bind(this), 100)
   }
 }
 
@@ -185,7 +193,7 @@ function startGame() {
   // https://developer.mozilla.org/en-US/docs/Web/API/window/requestAnimationFrame#parameters
   oldTimeStamp = performance.now()
 
-  animate(0) // specify the first timestamp passed to animate is 0
+  animate(oldTimeStamp) // specify the first timestamp passed to animate
 }
 
 function endGame() {
@@ -200,8 +208,7 @@ function resetGame() {
   gameSettings.reset()
 }
 
-function drawScore(elapsedMs) {
-  gameSettings.totalTime += elapsedMs
+function drawScore() {
   const seconds = Math.round(gameSettings.totalTime/1000)
   ctx.save()
   ctx.fillStyle = 'white'
@@ -211,26 +218,33 @@ function drawScore(elapsedMs) {
 }
 
 function animate(timeStamp) {
-  ctx.save()
+  ctx.clearRect(0, 0, canvas.width, canvas.height)
+
+  // ctx.save()
   // ctx.fillStyle = 'rgba(0, 0, 0, 0.3)' // cheap trail effect
   // ctx.fillRect(0, 0, canvas.width, canvas.height)
-  ctx.clearRect(0, 0, canvas.width, canvas.height)
-  ctx.restore()
+  // ctx.restore()
 
   elapsedMs = (timeStamp - oldTimeStamp) // milliseconds passed since last call to animate
   oldTimeStamp = timeStamp
 
+  gameSettings.totalTime += elapsedMs
+
+  // if (gameSettings.totalTime % 10000 < 50) { // increase difficulty every 10s
+  //   increaseDifficulty()
+  // }
+
   cursorObject.draw()
-  drawScore(elapsedMs)
+  drawScore()
 
   gameObjects.turrets.forEach((turret) => { // update and render turrets
     turret.update()
     turret.draw()
   })
 
-  if (elapsedMs > 5000) { // TODO create/fire projectiles every 5 seconds, increase with score
+  if (gameSettings.totalTime % 5000 < 50) { //create/fire radial projectiles once every 5 seconds
     gameObjects.turrets.forEach((turret) => {
-      turret.fire()
+      turret.fireRadialOnce()
     })
   }
 
