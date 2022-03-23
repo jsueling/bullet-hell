@@ -87,7 +87,7 @@ class Projectile {
     this.y = y
     this.velX = velX * (canvas.height + canvas.width) * 0.001 // add magnitude to the normalized vectors depending on canvas height and width
     this.velY = velY * (canvas.height + canvas.width) * 0.001
-    this.radius = canvas.height * 0.005
+    this.radius = canvas.height * 0.003
   }
 
   draw() {
@@ -141,7 +141,7 @@ class Turret {
 
     if (this.y > canvas.height + this.radius) { // OOB reset turret to top of screen
       this.x = Math.random() * canvas.width
-      this.y = this.radius
+      this.y = -this.radius
       this.velY = this.randomYVelocity
     }
   }
@@ -151,7 +151,7 @@ class RadialTurret extends Turret {
   constructor() {
     super()
     this.colour = 'red'
-    this.radius = canvas.height * 0.005
+    this.radius = canvas.height * 0.02
     this.x = this.radius + Math.random() * (canvas.width - 2 * this.radius) // always starts with its full diameter inside the viewport
     this.y = 0 // could spawn randomly distributed above y = 0
     this.velY = canvas.height * (Math.random() * 0.001 + 0.001) // velocity varying between 0.1 to 0.2 % of canvas height
@@ -177,7 +177,7 @@ class AimedTurret extends Turret {
   constructor() {
     super()
     this.colour = 'yellow'
-    this.radius = canvas.height * 0.01
+    this.radius = canvas.height * 0.02
     this.x = this.radius + Math.random() * (canvas.width - 2 * this.radius)
     this.y = 0
     this.velY = canvas.height * (Math.random() * 0.0005 + 0.0005) // velocity varying between 0.05 to 0.1 % of canvas height
@@ -212,20 +212,20 @@ class AimedTurret extends Turret {
 
 window.onload = init
 
-window.addEventListener('resize', function() {
-  // cancel animation on resize and clear the canvas, then debounce restarting the animation
-  endGame()
+window.onresize = function() {
+  // debounce resize event. End the current gameLoop, reset the game settings for the next gameLoop and call init
   clearTimeout(timeoutIDs.resizeTimeoutID)
   timeoutIDs.resizeTimeoutID = setTimeout(function() {
+    endGame()
     resetGame()
     init()
-  }, 200)
-})
+  }, 100)
+}
 
-window.addEventListener('mousemove', function(e) {
+window.onmousemove = function(e) {
   cursorObject.x = e.x
   cursorObject.y = e.y
-})
+}
 
 function init() {
   canvas = document.getElementById('canvas1')
@@ -283,9 +283,7 @@ function startGame() {
 
 function endGame() {
   cancelAnimationFrame(timeoutIDs.gameLoopID)
-  if (ctx) {
-    ctx.clearRect(0, 0, canvas.width, canvas.height)
-  }
+  ctx.clearRect(0, 0, canvas.width, canvas.height)
 }
 
 function resetGame() {
