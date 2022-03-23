@@ -4,21 +4,17 @@ import './styles.css'
 
 let canvas
 let ctx
-let animationID
-let resizeTimerID
-let elapsedMs
-let oldTimeStamp = 0
 
 const gameSettings = {
   totalTime: 0, // window loses focus but score ticks up https://developer.mozilla.org/en-US/docs/Web/API/Window/focus_event
-  radialTurretNumber: 5, // increase turret number/maxProjectile number with duration/score
+  radialTurretNumber: 1, // increase turret number/maxProjectile number with duration/score
   aimedTurretNumber: 1,
   numRadialProjectiles: 10,
   numAimedProjectiles: 10,
   // fireInterval: 5000, // TODO
   reset() {
     this.aimedTurretNumber = 1
-    this.radialTurretNumber = 5
+    this.radialTurretNumber = 1
     this.numRadialProjectiles = 10,
     this.numAimedProjectiles = 10,
     this.totalTime = 0
@@ -38,7 +34,27 @@ const gameObjects = {
   }
 }
 
-// const gameTimers = {} // TODO
+const gameTimers = {
+  elapsedMs: undefined,
+  oldTimeStamp: 0,
+  reset() {
+    this.oldTimeStamp = 0
+    this.elapsedMs = undefined
+  }
+}
+
+const timeoutIDs = {
+  gameLoopID: undefined,
+  resizeTimeoutID: undefined,
+  aimedTimeoutIDs: [],
+  reset() {
+    this.aimedTimeoutIDs.forEach((timeoutID) => {
+      clearTimeout(timeoutID)
+    })
+    this.resizeTimeoutID = undefined
+    this.gameLoopID = undefined
+  }
+}
 
 const cursorObject = {
   x: 0,
@@ -142,11 +158,11 @@ class RadialTurret extends Turret {
     this.randomYVelocity = this.velY
   }
 
-  #fireRadial() {
+  #fireRadial() { // fires evenly spaced projectiles emitted from the centre of each turret
     for (let i=0; i < gameSettings.numRadialProjectiles; i++) {
       const slice = 2 * Math.PI / gameSettings.numRadialProjectiles;
       const angle = slice * i;
-      // each radial projectile gets normalized vector equally spaced around unit circle
+      // assigns vectors that evenly distributes each radialProjectile around the unit circle
       gameObjects.radialProjectiles.push(new RadialProjectile(this.x, this.y, Math.sin(angle), Math.cos(angle)))
     }
   }
@@ -168,25 +184,29 @@ class AimedTurret extends Turret {
     this.randomYVelocity = this.velY
   }
 
-  shootBarrage() {
+  #fireAimed() { // fires aimed projectiles
     const dist = Math.sqrt((this.x - cursorObject.x)**2 + (this.y - cursorObject.y)**2)
-    const velX = (cursorObject.x - this.x) / dist
+    const velX = (cursorObject.x - this.x) / dist // normalized vectors pointing from the turret to the cursor
     const velY = (cursorObject.y - this.y) / dist
+    // increase magnitude of vector with difficulty?
     gameObjects.aimedProjectiles.push(new AimedProjectile(this.x, this.y, velX, velY))
   }
 
-  #fireAimed() {
+  #fireAimedInterval() { // calls #fireAimed at 0.1s interval for total numAimedProjectiles
+    let aimedTimeoutID
     for (let i=0; i < gameSettings.numAimedProjectiles; i++) {
 
-      // TODO increase magnitude of vector with difficulty
+      aimedTimeoutID = setTimeout(this.#fireAimed.bind(this), i * 100)
 
-      setTimeout(this.shootBarrage.bind(this), i * 100)
+      // store the ID of each setTimeout in array, allowing us to clearTimeout on all of them if there are setTimeouts pending when the game ends
+      timeoutIDs.aimedTimeoutIDs.push(aimedTimeoutID)
+      if (timeoutIDs.aimedTimeoutIDs.length > gameSettings.numAimedProjectiles) timeoutIDs.aimedTimeoutIDs.shift()
     }
   }
 
-  fireAimedOnce() {
+  fireAimedOnce() { // debounces the calls to fire from gameLoop to this turret
     if (this.fireTimeoutID) clearTimeout(this.fireTimeoutID)
-    this.fireTimeoutID = setTimeout(this.#fireAimed.bind(this), 100)
+    this.fireTimeoutID = setTimeout(this.#fireAimedInterval.bind(this), 100)
   }
 }
 
@@ -195,8 +215,8 @@ window.onload = init
 window.addEventListener('resize', function() {
   // cancel animation on resize and clear the canvas, then debounce restarting the animation
   endGame()
-  clearTimeout(resizeTimerID)
-  resizeTimerID = setTimeout(function() {
+  clearTimeout(timeoutIDs.resizeTimeoutID)
+  timeoutIDs.resizeTimeoutID = setTimeout(function() {
     resetGame()
     init()
   }, 200)
@@ -255,15 +275,14 @@ function startGame() {
     gameObjects.aimedTurrets.push(new AimedTurret())
   }
 
-  // returns DOMHighResTimeStamp which is the same format as the timeStamp passed to the callback of RequestAnimationFrame, animate in this case
   // https://developer.mozilla.org/en-US/docs/Web/API/window/requestAnimationFrame#parameters
-  oldTimeStamp = performance.now()
+  gameTimers.oldTimeStamp = performance.now() // returns DOMHighResTimeStamp which is the same format as the timeStamp passed to the callback of RequestAnimationFrame, gameLoop in this case
 
-  animate(oldTimeStamp) // specify the first timestamp passed to animate
+  gameLoop(gameTimers.oldTimeStamp) // specify the first timestamp passed to gameLoop. Passing performance.now() means elapsedMs always starts from 0
 }
 
 function endGame() {
-  cancelAnimationFrame(animationID)
+  cancelAnimationFrame(timeoutIDs.gameLoopID)
   if (ctx) {
     ctx.clearRect(0, 0, canvas.width, canvas.height)
   }
@@ -272,6 +291,8 @@ function endGame() {
 function resetGame() {
   gameObjects.reset()
   gameSettings.reset()
+  timeoutIDs.reset()
+  gameTimers.reset()
 }
 
 function drawScore() {
@@ -283,7 +304,7 @@ function drawScore() {
   ctx.restore()
 }
 
-function animate(timeStamp) {
+function gameLoop(timeStamp) {
   ctx.clearRect(0, 0, canvas.width, canvas.height)
 
   // ctx.save()
@@ -291,10 +312,10 @@ function animate(timeStamp) {
   // ctx.fillRect(0, 0, canvas.width, canvas.height)
   // ctx.restore()
 
-  elapsedMs = (timeStamp - oldTimeStamp) // milliseconds passed since last call to animate
-  oldTimeStamp = timeStamp
+  gameTimers.elapsedMs = (timeStamp - gameTimers.oldTimeStamp) // milliseconds passed since last call to gameLoop
+  gameTimers.oldTimeStamp = timeStamp
 
-  gameSettings.totalTime += elapsedMs
+  gameSettings.totalTime += gameTimers.elapsedMs
 
   // if (gameSettings.totalTime % 10000 < 50) { // increase difficulty every 10s
   //   increaseDifficulty()
@@ -340,13 +361,13 @@ function animate(timeStamp) {
     turret.draw()
   })
 
-  if (gameSettings.totalTime % 3000 < 50) { // create/fire radial projectiles once every 5 seconds
+  if (gameSettings.totalTime % 3000 < 50) { // create/fire aimed projectiles once every 5 seconds
     gameObjects.aimedTurrets.forEach((turret) => {
       turret.fireAimedOnce()
     })
   }
 
-  for (let i=0; i < gameObjects.aimedProjectiles.length; i++) { // update and render radial projectiles
+  for (let i=0; i < gameObjects.aimedProjectiles.length; i++) { // update and render aimed projectiles
     let p = gameObjects.aimedProjectiles[i]
     p.update()
 
@@ -364,6 +385,6 @@ function animate(timeStamp) {
       i--
     }
   }
-  
-  animationID = window.requestAnimationFrame(animate)
+
+  timeoutIDs.gameLoopID = window.requestAnimationFrame(gameLoop)
 }
