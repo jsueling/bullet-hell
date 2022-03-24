@@ -8,16 +8,16 @@ let ctx
 const gameSettings = {
   totalTime: 0, // window loses focus but score ticks up https://developer.mozilla.org/en-US/docs/Web/API/Window/focus_event
   radialTurretNumber: 1, // increase turret number/maxProjectile number with duration/score
-  aimedTurretNumber: 1,
   numRadialProjectiles: 10,
-  numAimedProjectiles: 10,
+  aimedTurretNumber: 0,
+  numAimedProjectiles: 1,
   // fireInterval: 5000, // TODO
   reset() {
-    this.aimedTurretNumber = 1
-    this.radialTurretNumber = 1
-    this.numRadialProjectiles = 10,
-    this.numAimedProjectiles = 10,
     this.totalTime = 0
+    this.radialTurretNumber = 1
+    this.numRadialProjectiles = 10
+    this.aimedTurretNumber = 0
+    this.numAimedProjectiles = 1
   }
 }
 
@@ -27,6 +27,14 @@ const gameObjects = {
   aimedTurrets: [],
   aimedProjectiles: [],
   reset() {
+    // setTimeouts for the turret fire methods called as the game ends persist and push projectiles
+    // to the next game after reset
+    this.radialTurrets.forEach((turret) => {
+      clearTimeout(turret.fireTimeoutID)
+    })
+    this.aimedTurrets.forEach((turret) => {
+      clearTimeout(turret.fireTimeoutID)
+    })
     this.radialTurrets = []
     this.radialProjectiles = []
     this.aimedTurrets = []
@@ -85,8 +93,8 @@ class Projectile {
   constructor(x, y, velX, velY) {
     this.x = x
     this.y = y
-    this.velX = velX * (canvas.height + canvas.width) * 0.001 // add magnitude to the normalized vectors depending on canvas height and width
-    this.velY = velY * (canvas.height + canvas.width) * 0.001
+    this.velX = velX * (canvas.height + canvas.width) * 0.0005 // add magnitude to the normalized vectors to scale with canvas width/height
+    this.velY = velY * (canvas.height + canvas.width) * 0.0005
     this.radius = canvas.height * 0.003
   }
 
@@ -151,11 +159,12 @@ class RadialTurret extends Turret {
   constructor() {
     super()
     this.colour = 'red'
-    this.radius = canvas.height * 0.02
+    this.radius = canvas.height * 0.01
     this.x = this.radius + Math.random() * (canvas.width - 2 * this.radius) // always starts with its full diameter inside the viewport
     this.y = 0 // could spawn randomly distributed above y = 0
-    this.velY = canvas.height * (Math.random() * 0.001 + 0.001) // velocity varying between 0.1 to 0.2 % of canvas height
+    this.velY = canvas.height * (Math.random() * 0.00025 + 0.00025) // velocity varying between 0.025 to 0.05 % of canvas height
     this.randomYVelocity = this.velY
+    this.offSet = 0
   }
 
   #fireRadial() { // fires evenly spaced projectiles emitted from the centre of each turret
@@ -163,13 +172,34 @@ class RadialTurret extends Turret {
       const slice = 2 * Math.PI / gameSettings.numRadialProjectiles;
       const angle = slice * i;
       // assigns vectors that evenly distributes each radialProjectile around the unit circle
-      gameObjects.radialProjectiles.push(new RadialProjectile(this.x, this.y, Math.sin(angle), Math.cos(angle)))
+      gameObjects.radialProjectiles.push(new RadialProjectile(this.x, this.y, Math.cos(angle), Math.sin(angle)))
     }
+  }
+
+  // Identical to fireRadial but rotate each ring of projectiles by offset then repeat
+  #radialSpin() { // rename? + cleanup timeouts
+    for (let j=0; j < gameSettings.numRadialProjectiles; j++) {
+      const slice = 2 * Math.PI / gameSettings.numRadialProjectiles;
+      const angle = this.offSet + slice * j; // add offset
+      gameObjects.radialProjectiles.push(new RadialProjectile(this.x, this.y, Math.cos(angle), Math.sin(angle)))
+    }
+    this.offSet += Math.PI * 0.22 // Math.PI / 4.5, multiplication more efficient that dividing, accumulate offSet for each ring
+  }
+
+  #fireRadialSpins() {
+    for (let i=0; i < 20; i++) { // 20 spins at 0.08s interval
+      setTimeout(this.#radialSpin.bind(this), i * 80) // bind this context to the function in the setTimeout call
+    }
+  }
+
+  fireRadialSpinOnce() {
+    if (this.fireTimeoutID) clearTimeout(this.fireTimeoutID)
+    this.fireTimeoutID = setTimeout(this.#fireRadialSpins.bind(this), 20)
   }
 
   fireRadialOnce() { // debounce calling turret.fireRadial() binding current Turret instance as the context
     if (this.fireTimeoutID) clearTimeout(this.fireTimeoutID)
-    this.fireTimeoutID = setTimeout(this.#fireRadial.bind(this), 100)
+    this.fireTimeoutID = setTimeout(this.#fireRadial.bind(this), 20)
   }
 }
 
@@ -177,7 +207,7 @@ class AimedTurret extends Turret {
   constructor() {
     super()
     this.colour = 'yellow'
-    this.radius = canvas.height * 0.02
+    this.radius = canvas.height * 0.01
     this.x = this.radius + Math.random() * (canvas.width - 2 * this.radius)
     this.y = 0
     this.velY = canvas.height * (Math.random() * 0.0005 + 0.0005) // velocity varying between 0.05 to 0.1 % of canvas height
@@ -192,14 +222,12 @@ class AimedTurret extends Turret {
     gameObjects.aimedProjectiles.push(new AimedProjectile(this.x, this.y, velX, velY))
   }
 
-  #fireAimedInterval() { // calls #fireAimed at 0.1s interval for total numAimedProjectiles
-    let aimedTimeoutID
+  #fireAimedInterval() { // calls #fireAimed at 0.2s interval for total numAimedProjectiles
     for (let i=0; i < gameSettings.numAimedProjectiles; i++) {
 
-      aimedTimeoutID = setTimeout(this.#fireAimed.bind(this), i * 100)
-
       // store the ID of each setTimeout in array, allowing us to clearTimeout on all of them if there are setTimeouts pending when the game ends
-      timeoutIDs.aimedTimeoutIDs.push(aimedTimeoutID)
+      timeoutIDs.aimedTimeoutIDs.push(setTimeout(this.#fireAimed.bind(this), i * 200))
+
       if (timeoutIDs.aimedTimeoutIDs.length > gameSettings.numAimedProjectiles) timeoutIDs.aimedTimeoutIDs.shift()
     }
   }
@@ -245,24 +273,22 @@ function init() {
 }
 
 function startMenu() {
-  const menuText = 'PRESS SPACE TO START'
+  const menuText = 'CLICK TO START'
 
   ctx.save()
   ctx.translate(canvas.width/2, canvas.height/2)
   ctx.fillText(menuText, 0, 0)
   ctx.restore()
 
-  document.addEventListener('keydown', spaceBarListener)
+  document.addEventListener('click', clickListener)
 }
 
-function spaceBarListener(e) {
-  if (e.key === ' ') {
-    startGame()
-  }
+function clickListener() {
+  startGame()
 }
 
 function startGame() {
-  document.removeEventListener('keydown', spaceBarListener)
+  document.removeEventListener('click', clickListener)
 
   cursorObject.x = canvas.width/2
   cursorObject.y = canvas.height/2
@@ -322,18 +348,24 @@ function gameLoop(timeStamp) {
   cursorObject.draw()
   drawScore()
 
+  if (gameSettings.totalTime % 3000 < 20) { // create/fire aimed projectiles
+    gameObjects.aimedTurrets.forEach((turret) => {
+      turret.fireAimedOnce()
+    })
+  }
+
+  if (gameSettings.totalTime % 10000 < 20) { // create/fire radial projectiles // && gameSettings.totalTime < 3000 to get burst
+    gameObjects.radialTurrets.forEach((turret) => {
+      turret.fireRadialSpinOnce()
+    })
+  }
+
   // Radial turrets/projectiles
   gameObjects.radialTurrets.forEach((turret) => { // update and draw turrets
     turret.update()
     turret.draw()
   })
-
-  if (gameSettings.totalTime % 5000 < 50) { // create/fire radial projectiles once every 5 seconds
-    gameObjects.radialTurrets.forEach((turret) => {
-      turret.fireRadialOnce()
-    })
-  }
-
+  
   for (let i=0; i < gameObjects.radialProjectiles.length; i++) { // update and render radial projectiles
     let p = gameObjects.radialProjectiles[i]
     p.update()
@@ -358,12 +390,6 @@ function gameLoop(timeStamp) {
     turret.update()
     turret.draw()
   })
-
-  if (gameSettings.totalTime % 3000 < 50) { // create/fire aimed projectiles once every 5 seconds
-    gameObjects.aimedTurrets.forEach((turret) => {
-      turret.fireAimedOnce()
-    })
-  }
 
   for (let i=0; i < gameObjects.aimedProjectiles.length; i++) { // update and render aimed projectiles
     let p = gameObjects.aimedProjectiles[i]
