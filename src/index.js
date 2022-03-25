@@ -7,15 +7,17 @@ let ctx
 
 const gameSettings = {
   totalTime: 0, // window loses focus but score ticks up https://developer.mozilla.org/en-US/docs/Web/API/Window/focus_event
-  radialTurretNumber: 1, // increase turret number/maxProjectile number with duration/score
-  numRadialProjectiles: 10,
+  radialTurretNumber: 2, // increase turret number/maxProjectile number with duration/score
+  numRadialProjectiles: 20,
+  numRadialRings: 10,
   aimedTurretNumber: 0,
   numAimedProjectiles: 1,
   // fireInterval: 5000, // TODO
   reset() {
     this.totalTime = 0
-    this.radialTurretNumber = 1
-    this.numRadialProjectiles = 10
+    this.radialTurretNumber = 2
+    this.numRadialProjectiles = 20
+    this.numRadialRings = 10
     this.aimedTurretNumber = 0
     this.numAimedProjectiles = 1
   }
@@ -31,9 +33,15 @@ const gameObjects = {
     // to the next game after reset
     this.radialTurrets.forEach((turret) => {
       clearTimeout(turret.fireTimeoutID)
+      turret.delayedTimeoutIDs.forEach((id) => {
+        clearTimeout(id)
+      })
     })
     this.aimedTurrets.forEach((turret) => {
       clearTimeout(turret.fireTimeoutID)
+      turret.delayedTimeoutIDs.forEach((id) => {
+        clearTimeout(id)
+      })
     })
     this.radialTurrets = []
     this.radialProjectiles = []
@@ -117,7 +125,7 @@ class Projectile {
 class RadialProjectile extends Projectile {
   constructor(x, y, velX, velY) {
     super(x, y, velX, velY)
-    this.colour = 'green'
+    this.colour = 'white'
   }
 }
 
@@ -131,7 +139,8 @@ class AimedProjectile extends Projectile {
 class Turret {
   constructor() {
     this.velX = 0
-    this.fireTimeoutID = undefined
+    this.fireTimeoutID = undefined // stores the debounced timeoutID call for this turret to invoke a fire sequence once (can be single or interval)
+    this.delayedTimeoutIDs = [] // stores the timeoutIDs for each of the fire methods called at delayed intervals
   }
 
   draw() {
@@ -165,6 +174,7 @@ class RadialTurret extends Turret {
     this.velY = canvas.height * (Math.random() * 0.00025 + 0.00025) // velocity varying between 0.025 to 0.05 % of canvas height
     this.randomYVelocity = this.velY
     this.offSet = 0
+    this.offSetCount = 1
   }
 
   #fireRadial() { // fires evenly spaced projectiles emitted from the centre of each turret
@@ -176,25 +186,42 @@ class RadialTurret extends Turret {
     }
   }
 
-  // Identical to fireRadial but rotate each ring of projectiles by offset then repeat
-  #radialSpin() { // rename? + cleanup timeouts
-    for (let j=0; j < gameSettings.numRadialProjectiles; j++) {
+  #windMillRing() { // Rings of Straight line + staggered line
+
+    for (let j=0; j < gameSettings.numRadialProjectiles; j++) { // these rings do not accumulate offset, straight line
       const slice = 2 * Math.PI / gameSettings.numRadialProjectiles;
-      const angle = this.offSet + slice * j; // add offset
+      const angle = slice * j;
       gameObjects.radialProjectiles.push(new RadialProjectile(this.x, this.y, Math.cos(angle), Math.sin(angle)))
     }
-    this.offSet += Math.PI * 0.22 // Math.PI / 4.5, multiplication more efficient that dividing, accumulate offSet for each ring
+
+    for (let j=0; j < gameSettings.numRadialProjectiles; j++) { // these rings accumulate offset which staggers them
+      const slice = 2 * Math.PI / gameSettings.numRadialProjectiles;
+      const angle = this.offSet + slice * j;
+      gameObjects.radialProjectiles.push(new RadialProjectile(this.x, this.y, Math.cos(angle), Math.sin(angle)))
+    }
+
+    if (this.offSetCount % 2 == 0) { // offSet only increases every other call to it, staggers in lines of 2
+      this.offSet += Math.PI * 0.22 // multiplication more efficient that dividing, accumulate offSet for each ring. += Math.PI * 0.22 || Math.PI / 4.5 || 40° are the same
+    }
+    this.offSetCount += 1
   }
 
-  #fireRadialSpins() {
-    for (let i=0; i < 20; i++) { // 20 spins at 0.08s interval
-      setTimeout(this.#radialSpin.bind(this), i * 80) // bind this context to the function in the setTimeout call
+  #fireRadialRings() {
+    for (let i=0; i < gameSettings.numRadialRings; i++) { // 10 rings at 120ms interval
+      this.delayedTimeoutIDs.push(
+        setTimeout(this.#windMillRing.bind(this), i * 120) // bind this context when setTimeout calls the method of this turret
+      )
+
+      if (this.delayedTimeoutIDs.length > gameSettings.numRadialRings) { // FIFO only store the most recent delayedTimeoutIDs
+        this.delayedTimeoutIDs.shift()
+      }
+
     }
   }
 
-  fireRadialSpinOnce() {
+  fireRadialRingsOnce() {
     if (this.fireTimeoutID) clearTimeout(this.fireTimeoutID)
-    this.fireTimeoutID = setTimeout(this.#fireRadialSpins.bind(this), 20)
+    this.fireTimeoutID = setTimeout(this.#fireRadialRings.bind(this), 20)
   }
 
   fireRadialOnce() { // debounce calling turret.fireRadial() binding current Turret instance as the context
@@ -226,9 +253,14 @@ class AimedTurret extends Turret {
     for (let i=0; i < gameSettings.numAimedProjectiles; i++) {
 
       // store the ID of each setTimeout in array, allowing us to clearTimeout on all of them if there are setTimeouts pending when the game ends
-      timeoutIDs.aimedTimeoutIDs.push(setTimeout(this.#fireAimed.bind(this), i * 200))
+      this.delayedTimeoutIDs.push(
+        setTimeout(this.#fireAimed.bind(this), i * 200)
+      )
 
-      if (timeoutIDs.aimedTimeoutIDs.length > gameSettings.numAimedProjectiles) timeoutIDs.aimedTimeoutIDs.shift()
+      if (this.delayedTimeoutIDs > gameSettings.numAimedProjectiles) { // only works for a single turret firing 1 * numAimedProjectiles, perhaps need separate variable for max setTimeouts for AimedTurrets
+        timeoutIDs.aimedTimeoutIDs.shift()
+      }
+
     }
   }
 
@@ -356,7 +388,7 @@ function gameLoop(timeStamp) {
 
   if (gameSettings.totalTime % 10000 < 20) { // create/fire radial projectiles // && gameSettings.totalTime < 3000 to get burst
     gameObjects.radialTurrets.forEach((turret) => {
-      turret.fireRadialSpinOnce()
+      turret.fireRadialRingsOnce()
     })
   }
 
