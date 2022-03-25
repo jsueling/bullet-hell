@@ -10,16 +10,16 @@ const gameSettings = {
   radialTurretNumber: 2, // increase turret number/maxProjectile number with duration/score
   numRadialProjectiles: 20,
   numRadialRings: 10,
-  aimedTurretNumber: 0,
-  numAimedProjectiles: 1,
+  aimedTurretNumber: 1,
+  numAimedProjectiles: 30,
   // fireInterval: 5000, // TODO
   reset() {
     this.totalTime = 0
     this.radialTurretNumber = 2
     this.numRadialProjectiles = 20
     this.numRadialRings = 10
-    this.aimedTurretNumber = 0
-    this.numAimedProjectiles = 1
+    this.aimedTurretNumber = 1
+    this.numAimedProjectiles = 30
   }
 }
 
@@ -28,6 +28,7 @@ const gameObjects = {
   radialProjectiles: [],
   aimedTurrets: [],
   aimedProjectiles: [],
+  playerProjectiles: [],
   reset() {
     // setTimeouts for the turret fire methods called as the game ends persist and push projectiles
     // to the next game after reset
@@ -47,28 +48,24 @@ const gameObjects = {
     this.radialProjectiles = []
     this.aimedTurrets = []
     this.aimedProjectiles = []
+    this.playerProjectiles = []
   }
 }
 
 const gameTimers = {
   elapsedMs: undefined,
-  oldTimeStamp: 0,
+  oldTimeStamp: undefined,
   reset() {
-    this.oldTimeStamp = 0
-    this.elapsedMs = undefined
+    // empty
   }
 }
 
 const timeoutIDs = {
   gameLoopID: undefined,
   resizeTimeoutID: undefined,
-  aimedTimeoutIDs: [],
+  cursorObjectfireInterval: undefined,
   reset() {
-    this.aimedTimeoutIDs.forEach((timeoutID) => {
-      clearTimeout(timeoutID)
-    })
-    this.resizeTimeoutID = undefined
-    this.gameLoopID = undefined
+    clearInterval(this.cursorObjectfireInterval)
   }
 }
 
@@ -94,6 +91,15 @@ const cursorObject = {
       return true
     }
     return false
+  },
+  fire() {
+    gameObjects.playerProjectiles.push( // fires 2 shots upwards at L, R edge of the cursorObject
+      new PlayerProjectile(this.x - this.radius, this.y, 0, -3),
+      new PlayerProjectile(this.x + this.radius, this.y, 0, -3),
+    )
+  },
+  startFireInterval() {
+    timeoutIDs.cursorObjectfireInterval = setInterval(this.fire.bind(this), 500)
   }
 }
 
@@ -103,7 +109,6 @@ class Projectile {
     this.y = y
     this.velX = velX * (canvas.height + canvas.width) * 0.0005 // add magnitude to the normalized vectors to scale with canvas width/height
     this.velY = velY * (canvas.height + canvas.width) * 0.0005
-    this.radius = canvas.height * 0.003
   }
 
   draw() {
@@ -126,6 +131,7 @@ class RadialProjectile extends Projectile {
   constructor(x, y, velX, velY) {
     super(x, y, velX, velY)
     this.colour = 'white'
+    this.radius = canvas.height * 0.003
   }
 }
 
@@ -133,6 +139,15 @@ class AimedProjectile extends Projectile {
   constructor(x, y, velX, velY) {
     super(x, y, velX, velY)
     this.colour = 'orange'
+    this.radius = canvas.height * 0.003
+  }
+}
+
+class PlayerProjectile extends Projectile {
+  constructor(x, y, velX, velY) {
+    super(x, y, velX, velY)
+    this.colour = 'magenta'
+    this.radius = canvas.height * 0.002
   }
 }
 
@@ -249,16 +264,16 @@ class AimedTurret extends Turret {
     gameObjects.aimedProjectiles.push(new AimedProjectile(this.x, this.y, velX, velY))
   }
 
-  #fireAimedInterval() { // calls #fireAimed at 0.2s interval for total numAimedProjectiles
+  #fireAimedInterval() { // calls #fireAimed at 80ms interval for total numAimedProjectiles
     for (let i=0; i < gameSettings.numAimedProjectiles; i++) {
 
       // store the ID of each setTimeout in array, allowing us to clearTimeout on all of them if there are setTimeouts pending when the game ends
       this.delayedTimeoutIDs.push(
-        setTimeout(this.#fireAimed.bind(this), i * 200)
+        setTimeout(this.#fireAimed.bind(this), i * 80)
       )
 
       if (this.delayedTimeoutIDs > gameSettings.numAimedProjectiles) { // only works for a single turret firing 1 * numAimedProjectiles, perhaps need separate variable for max setTimeouts for AimedTurrets
-        timeoutIDs.aimedTimeoutIDs.shift()
+        this.delayedTimeoutIDs.shift()
       }
 
     }
@@ -266,7 +281,7 @@ class AimedTurret extends Turret {
 
   fireAimedOnce() { // debounces the calls to fire from gameLoop to this turret
     if (this.fireTimeoutID) clearTimeout(this.fireTimeoutID)
-    this.fireTimeoutID = setTimeout(this.#fireAimedInterval.bind(this), 100)
+    this.fireTimeoutID = setTimeout(this.#fireAimedInterval.bind(this), 20)
   }
 }
 
@@ -324,6 +339,7 @@ function startGame() {
 
   cursorObject.x = canvas.width/2
   cursorObject.y = canvas.height/2
+  cursorObject.startFireInterval()
 
   for (let i=0; i < gameSettings.radialTurretNumber; i++) {
     gameObjects.radialTurrets.push(new RadialTurret())
@@ -380,7 +396,18 @@ function gameLoop(timeStamp) {
   cursorObject.draw()
   drawScore()
 
-  if (gameSettings.totalTime % 3000 < 20) { // create/fire aimed projectiles
+  for (let i=0; i < gameObjects.playerProjectiles.length; i++) {
+
+    let p = gameObjects.playerProjectiles[i]
+    p.update()
+    p.draw()
+    if (p.y < -p.radius) { // OOB, player projectiles go up screen in straight line
+      gameObjects.playerProjectiles.splice(i, 1) // remove projectiles outside of screen
+      i--
+    }
+  }
+
+  if (gameSettings.totalTime % 5000 < 20) { // create/fire aimed projectiles
     gameObjects.aimedTurrets.forEach((turret) => {
       turret.fireAimedOnce()
     })
@@ -399,16 +426,15 @@ function gameLoop(timeStamp) {
   })
   
   for (let i=0; i < gameObjects.radialProjectiles.length; i++) { // update and render radial projectiles
+
     let p = gameObjects.radialProjectiles[i]
     p.update()
-
     if (cursorObject.collidesWith(p)) { // check collision for each with cursorObject
       endGame()
       resetGame()
       startMenu()
       return
     }
-
     p.draw()
 
     if (p.x < -p.radius || p.x > canvas.width + p.radius || p.y < -p.radius || p.y > canvas.height + p.radius) { // OOB
@@ -424,16 +450,15 @@ function gameLoop(timeStamp) {
   })
 
   for (let i=0; i < gameObjects.aimedProjectiles.length; i++) { // update and render aimed projectiles
+
     let p = gameObjects.aimedProjectiles[i]
     p.update()
-
     if (cursorObject.collidesWith(p)) { // check collision for each with cursorObject
       endGame()
       resetGame()
       startMenu()
       return
     }
-
     p.draw()
 
     if (p.x < -p.radius || p.x > canvas.width + p.radius || p.y < -p.radius || p.y > canvas.height + p.radius) { // OOB
