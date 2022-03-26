@@ -30,19 +30,11 @@ const gameObjects = {
   aimedProjectiles: [],
   playerProjectiles: [],
   reset() {
-    // setTimeouts for the turret fire methods called as the game ends persist and push projectiles
-    // to the next game after reset
     this.radialTurrets.forEach((turret) => {
-      clearTimeout(turret.fireTimeoutID)
-      turret.delayedTimeoutIDs.forEach((id) => {
-        clearTimeout(id)
-      })
+      turret.stopFiring()
     })
     this.aimedTurrets.forEach((turret) => {
-      clearTimeout(turret.fireTimeoutID)
-      turret.delayedTimeoutIDs.forEach((id) => {
-        clearTimeout(id)
-      })
+      turret.stopFiring()
     })
     this.radialTurrets = []
     this.radialProjectiles = []
@@ -83,14 +75,6 @@ const cursorObject = {
     ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI)
     ctx.fill()
     ctx.restore()
-  },
-  collidesWith(projectile) { // returns boolean based on whether cursorObject circle collision with object
-    const dx = projectile.x - this.x
-    const dy = projectile.y - this.y
-    if (dx**2 + dy**2 < (this.radius + projectile.radius)**2) {
-      return true
-    }
-    return false
   },
   fire() {
     gameObjects.playerProjectiles.push( // fires 2 shots upwards at L, R edge of the cursorObject
@@ -176,6 +160,15 @@ class Turret {
       this.y = -this.radius
       this.velY = this.randomYVelocity
     }
+  }
+
+  // setTimeouts for the turret fire methods called as the game ends persist
+  // and push projectiles to the next game after reset unless this is called
+  stopFiring() {
+    clearTimeout(this.fireTimeoutID)
+    this.delayedTimeoutIDs.forEach((id) => {
+      clearTimeout(id)
+    })
   }
 }
 
@@ -288,7 +281,8 @@ class AimedTurret extends Turret {
 window.onload = init
 
 window.onresize = function() {
-  // debounce resize event. End the current gameLoop, reset the game settings for the next gameLoop and call init
+  // Debounce resize event. Then end the current gameLoop,
+  // reset the game settings for the next gameLoop and call init
   clearTimeout(timeoutIDs.resizeTimeoutID)
   timeoutIDs.resizeTimeoutID = setTimeout(function() {
     endGame()
@@ -350,9 +344,13 @@ function startGame() {
   }
 
   // https://developer.mozilla.org/en-US/docs/Web/API/window/requestAnimationFrame#parameters
-  gameTimers.oldTimeStamp = performance.now() // returns DOMHighResTimeStamp which is the same format as the timeStamp passed to the callback of RequestAnimationFrame, gameLoop in this case
+  // returns DOMHighResTimeStamp which is the same format as the timeStamp
+  // passed to the callback of RequestAnimationFrame, gameLoop here
+  gameTimers.oldTimeStamp = performance.now()
 
-  gameLoop(gameTimers.oldTimeStamp) // specify the first timestamp passed to gameLoop. Passing performance.now() means elapsedMs always starts from 0
+  // Specify the first timestamp passed to gameLoop
+  // Passing performance.now() means elapsedMs always starts from 0
+  gameLoop(gameTimers.oldTimeStamp)
 }
 
 function endGame() {
@@ -396,14 +394,36 @@ function gameLoop(timeStamp) {
   cursorObject.draw()
   drawScore()
 
+  // Player projectiles
   for (let i=0; i < gameObjects.playerProjectiles.length; i++) {
 
-    let p = gameObjects.playerProjectiles[i]
-    p.update()
-    p.draw()
-    if (p.y < -p.radius) { // OOB, player projectiles go up screen in straight line
+    const projectile = gameObjects.playerProjectiles[i]
+
+    projectile.update()
+    projectile.draw()
+
+    if (projectile.y < -projectile.radius) { // OOB, player projectiles go up screen in straight line
       gameObjects.playerProjectiles.splice(i, 1) // remove projectiles outside of screen
       i--
+    }
+
+    // player projectiles colliding with turrets
+    for (let j=0; j < gameObjects.radialTurrets.length; j++) {
+      const turret = gameObjects.radialTurrets[j]
+      if (circleCollides(projectile, turret)) {
+        turret.stopFiring()
+        gameObjects.radialTurrets.splice(j, 1)
+        j--
+      }
+    }
+
+    for (let j=0; j < gameObjects.aimedTurrets.length; j++) {
+      const turret = gameObjects.aimedTurrets[j]
+      if (circleCollides(projectile, turret)) {
+        turret.stopFiring()
+        gameObjects.aimedTurrets.splice(j, 1)
+        j--
+      }
     }
   }
 
@@ -420,16 +440,16 @@ function gameLoop(timeStamp) {
   }
 
   // Radial turrets/projectiles
-  gameObjects.radialTurrets.forEach((turret) => { // update and draw turrets
+  gameObjects.radialTurrets.forEach((turret) => {
     turret.update()
     turret.draw()
   })
   
-  for (let i=0; i < gameObjects.radialProjectiles.length; i++) { // update and render radial projectiles
+  for (let i=0; i < gameObjects.radialProjectiles.length; i++) {
 
     let p = gameObjects.radialProjectiles[i]
     p.update()
-    if (cursorObject.collidesWith(p)) { // check collision for each with cursorObject
+    if (circleCollides(cursorObject, p)) { // check collision for each radialProjectile with cursorObject
       endGame()
       resetGame()
       startMenu()
@@ -438,22 +458,22 @@ function gameLoop(timeStamp) {
     p.draw()
 
     if (p.x < -p.radius || p.x > canvas.width + p.radius || p.y < -p.radius || p.y > canvas.height + p.radius) { // OOB
-      gameObjects.radialProjectiles.splice(i, 1) // remove projectiles outside of screen
+      gameObjects.radialProjectiles.splice(i, 1) // removes projectiles outside of screen
       i--
     }
   }
 
   // Aimed turrets/projectiles
-  gameObjects.aimedTurrets.forEach((turret) => { // update and draw turrets
+  gameObjects.aimedTurrets.forEach((turret) => {
     turret.update()
     turret.draw()
   })
 
-  for (let i=0; i < gameObjects.aimedProjectiles.length; i++) { // update and render aimed projectiles
+  for (let i=0; i < gameObjects.aimedProjectiles.length; i++) {
 
     let p = gameObjects.aimedProjectiles[i]
     p.update()
-    if (cursorObject.collidesWith(p)) { // check collision for each with cursorObject
+    if (circleCollides(cursorObject, p)) { // check collision for each aimedProjectile with cursorObject
       endGame()
       resetGame()
       startMenu()
@@ -468,4 +488,13 @@ function gameLoop(timeStamp) {
   }
 
   timeoutIDs.gameLoopID = window.requestAnimationFrame(gameLoop)
+}
+
+function circleCollides (A, B) { // returns boolean based on whether circle objects A and B collide
+  const dx = A.x - B.x
+  const dy = A.y - B.y
+  if (dx**2 + dy**2 < (A.radius + B.radius)**2) {
+    return true
+  }
+  return false
 }
