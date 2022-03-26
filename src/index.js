@@ -272,7 +272,7 @@ class AimedTurret extends Turret {
         setTimeout(this.#fireAimed.bind(this), i * 80)
       )
 
-      if (this.delayedTimeoutIDs > gameSettings.numAimedProjectiles) { // only works for a single turret firing 1 * numAimedProjectiles, perhaps need separate variable for max setTimeouts for AimedTurrets
+      if (this.delayedTimeoutIDs.length > gameSettings.numAimedProjectiles) { // only works for a single turret firing 1 * numAimedProjectiles, perhaps need separate variable for max setTimeouts for AimedTurrets
         this.delayedTimeoutIDs.shift()
       }
 
