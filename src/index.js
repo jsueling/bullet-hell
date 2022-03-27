@@ -7,21 +7,34 @@ let ctx
 
 const gameSettings = {
   totalTime: 0, // window loses focus but score ticks up https://developer.mozilla.org/en-US/docs/Web/API/Window/focus_event
-  radialTurretNumber: 2, // increase turret number/maxProjectile number with duration/score
-  numRadialProjectiles: 20,
+
+  maxRadialTurrets: 2, // maxTurret === currentTurret on game start
+  currentRadialTurrets: 2,
+  numRadialProjectiles: 20, // increase turret number/maxProjectile number with duration/score
   numRadialRings: 10,
-  aimedTurretNumber: 1,
+
+  maxAimedTurrets: 1,
+  currentAimedTurrets: 1,
   numAimedProjectiles: 30,
   // fireInterval: 5000, // TODO
   reset() {
     this.totalTime = 0
-    this.radialTurretNumber = 2
+    this.maxRadialTurrets = 2
+    this.currentRadialTurrets = 2
     this.numRadialProjectiles = 20
     this.numRadialRings = 10
-    this.aimedTurretNumber = 1
+    this.maxAimedTurrets = 1
+    this.currentAimedTurrets = 1
     this.numAimedProjectiles = 30
   }
 }
+
+// maxTurrets in gameSettings describes the limit of turrets that are on screen at one time,
+// which will be converged to by the actual number in gameObjects
+
+// doing the comparison: if (gameObjects.turrets.length < gameSettings.maxRadialTurrets)
+// can cause a bug if we want to delay replacement unless we immediately add the new turrets
+// because the next frame will call more setTimeouts to replace lost turrets
 
 const gameObjects = {
   radialTurrets: [],
@@ -56,8 +69,12 @@ const timeoutIDs = {
   gameLoopID: undefined,
   resizeTimeoutID: undefined,
   cursorObjectfireInterval: undefined,
+  createTurretTimeoutIDs: [],
   reset() {
     clearInterval(this.cursorObjectfireInterval)
+    this.createTurretTimeoutIDs.forEach((id) => {
+      clearTimeout(id)
+    })
   }
 }
 
@@ -331,24 +348,21 @@ function clickListener() {
 function startGame() {
   document.removeEventListener('click', clickListener)
 
+  // initialize cursor
   cursorObject.x = canvas.width/2
   cursorObject.y = canvas.height/2
   cursorObject.startFireInterval()
 
-  for (let i=0; i < gameSettings.radialTurretNumber; i++) {
-    gameObjects.radialTurrets.push(new RadialTurret())
-  }
-  
-  for (let i=0; i < gameSettings.aimedTurretNumber; i++) {
-    gameObjects.aimedTurrets.push(new AimedTurret())
-  }
+  // initialize turrets
+  createRadialTurret(gameSettings.maxRadialTurrets, 0)
+  createAimedTurret(gameSettings.maxAimedTurrets, 0)
 
   // https://developer.mozilla.org/en-US/docs/Web/API/window/requestAnimationFrame#parameters
-  // returns DOMHighResTimeStamp which is the same format as the timeStamp
+  // performance.now() returns DOMHighResTimeStamp which is the same format as the timeStamp
   // passed to the callback of RequestAnimationFrame, gameLoop here
   gameTimers.oldTimeStamp = performance.now()
 
-  // Specify the first timestamp passed to gameLoop
+  // Specify the first timestamp passed to gameLoop and initialize it
   // Passing performance.now() means elapsedMs always starts from 0
   gameLoop(gameTimers.oldTimeStamp)
 }
@@ -402,18 +416,19 @@ function gameLoop(timeStamp) {
     projectile.update()
     projectile.draw()
 
-    if (projectile.y < -projectile.radius) { // OOB, player projectiles go up screen in straight line
-      gameObjects.playerProjectiles.splice(i, 1) // remove projectiles outside of screen
+    if (projectile.y < -projectile.radius) { // OOB, player projectiles go up screen in straight line, remove projectiles above screen
+      gameObjects.playerProjectiles.splice(i, 1)
       i--
     }
 
-    // player projectiles colliding with turrets
+    // player projectiles colliding with turrets removes them
     for (let j=0; j < gameObjects.radialTurrets.length; j++) {
       const turret = gameObjects.radialTurrets[j]
       if (circleCollides(projectile, turret)) {
         turret.stopFiring()
         gameObjects.radialTurrets.splice(j, 1)
         j--
+        gameSettings.currentRadialTurrets--
       }
     }
 
@@ -423,23 +438,44 @@ function gameLoop(timeStamp) {
         turret.stopFiring()
         gameObjects.aimedTurrets.splice(j, 1)
         j--
+        gameSettings.currentAimedTurrets--
       }
     }
   }
 
-  if (gameSettings.totalTime % 5000 < 20) { // create/fire aimed projectiles
+  // Replacing turrets destroyed by the player or as difficulty increases if maxTurrets variable increases
+  if (gameSettings.currentRadialTurrets < gameSettings.maxRadialTurrets) {
+
+    // store number of replacements needed
+    const replacements = gameSettings.maxRadialTurrets - gameSettings.currentRadialTurrets
+    
+    createRadialTurret(replacements, 5000) // adjust respawn rate with difficulty
+
+    // Prevent re-entering this conditional on next frame
+    gameSettings.currentRadialTurrets = gameSettings.maxRadialTurrets
+  }
+
+  if (gameSettings.currentAimedTurrets < gameSettings.maxAimedTurrets) { // same as above but with aimed turrets
+    const replacements = gameSettings.maxAimedTurrets - gameSettings.currentAimedTurrets
+    createAimedTurret(replacements, 5000)
+    gameSettings.currentAimedTurrets = gameSettings.maxAimedTurrets
+  }
+
+  // Fire aimed projectiles from turrets
+  if (gameSettings.totalTime % 5000 < 20) {
     gameObjects.aimedTurrets.forEach((turret) => {
       turret.fireAimedOnce()
     })
   }
 
-  if (gameSettings.totalTime % 10000 < 20) { // create/fire radial projectiles // && gameSettings.totalTime < 3000 to get burst
+  // Fire radial projectiles from turrets
+  if (gameSettings.totalTime % 10000 < 20) {
     gameObjects.radialTurrets.forEach((turret) => {
       turret.fireRadialRingsOnce()
     })
   }
 
-  // Radial turrets/projectiles
+  // Draw and update radial turrets/projectiles
   gameObjects.radialTurrets.forEach((turret) => {
     turret.update()
     turret.draw()
@@ -447,23 +483,23 @@ function gameLoop(timeStamp) {
   
   for (let i=0; i < gameObjects.radialProjectiles.length; i++) {
 
-    let p = gameObjects.radialProjectiles[i]
-    p.update()
-    if (circleCollides(cursorObject, p)) { // check collision for each radialProjectile with cursorObject
+    const prj = gameObjects.radialProjectiles[i]
+    prj.update()
+    if (circleCollides(cursorObject, prj)) { // check collision for each radialProjectile with cursorObject
       endGame()
       resetGame()
       startMenu()
       return
     }
-    p.draw()
+    prj.draw()
 
-    if (p.x < -p.radius || p.x > canvas.width + p.radius || p.y < -p.radius || p.y > canvas.height + p.radius) { // OOB
+    if (prj.x < -prj.radius || prj.x > canvas.width + prj.radius || prj.y < -prj.radius || prj.y > canvas.height + prj.radius) { // OOB
       gameObjects.radialProjectiles.splice(i, 1) // removes projectiles outside of screen
       i--
     }
   }
 
-  // Aimed turrets/projectiles
+  // Draw and update aimed turrets/projectiles
   gameObjects.aimedTurrets.forEach((turret) => {
     turret.update()
     turret.draw()
@@ -471,17 +507,17 @@ function gameLoop(timeStamp) {
 
   for (let i=0; i < gameObjects.aimedProjectiles.length; i++) {
 
-    let p = gameObjects.aimedProjectiles[i]
-    p.update()
-    if (circleCollides(cursorObject, p)) { // check collision for each aimedProjectile with cursorObject
+    const prj = gameObjects.aimedProjectiles[i]
+    prj.update()
+    if (circleCollides(cursorObject, prj)) { // check collision for each aimedProjectile with cursorObject
       endGame()
       resetGame()
       startMenu()
       return
     }
-    p.draw()
+    prj.draw()
 
-    if (p.x < -p.radius || p.x > canvas.width + p.radius || p.y < -p.radius || p.y > canvas.height + p.radius) { // OOB
+    if (prj.x < -prj.radius || prj.x > canvas.width + prj.radius || prj.y < -prj.radius || prj.y > canvas.height + prj.radius) { // OOB
       gameObjects.aimedProjectiles.splice(i, 1) // remove projectiles outside of screen
       i--
     }
@@ -497,4 +533,28 @@ function circleCollides (A, B) { // returns boolean based on whether circle obje
     return true
   }
   return false
+}
+
+function createAimedTurret(num, idleTime) { // creates aimed turrets after some idleTime
+  for (let i=0; i < num; i++) {
+    timeoutIDs.createTurretTimeoutIDs.push(
+      setTimeout(() => gameObjects.aimedTurrets.push(new AimedTurret()), idleTime) // TODO idleTime + random extra time
+    )
+
+    if (timeoutIDs.createTurretTimeoutIDs.length > gameSettings.maxAimedTurrets + gameSettings.maxRadialTurrets) { // max number of turrets that can be created at once
+      timeoutIDs.createTurretTimeoutIDs.shift()
+    }
+  }
+}
+
+function createRadialTurret(num, idleTime) { // creates radial turrets after some idleTime
+  for (let i=0; i < num; i++) {
+    timeoutIDs.createTurretTimeoutIDs.push(
+      setTimeout(() => gameObjects.radialTurrets.push(new RadialTurret()), idleTime)
+    )
+
+    if (timeoutIDs.createTurretTimeoutIDs.length > gameSettings.maxAimedTurrets + gameSettings.maxRadialTurrets) {
+      timeoutIDs.createTurretTimeoutIDs.shift()
+    }
+  }
 }
