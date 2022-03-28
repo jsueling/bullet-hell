@@ -200,6 +200,11 @@ class RadialTurret extends Turret {
     this.randomYVelocity = this.velY
     this.offSet = 0
     this.offSetCount = 1
+    this.fireRadialMethods = [ // store function references in array https://stackoverflow.com/a/9792043
+      this.#fireRadial,
+      this.#fireRadialRings,
+      // TODO more methods
+    ]
   }
 
   #fireRadial() { // fires evenly spaced projectiles emitted from the centre of each turret
@@ -237,21 +242,20 @@ class RadialTurret extends Turret {
         setTimeout(this.#windMillRing.bind(this), i * 120) // bind this context when setTimeout calls the method of this turret
       )
       // FIFO only store the most recent delayedTimeoutIDs
-      if (this.delayedTimeoutIDs.length > gameSettings.numRadialRings) {
-        this.delayedTimeoutIDs.shift()
-      }
-
+      if (this.delayedTimeoutIDs.length > gameSettings.numRadialRings) this.delayedTimeoutIDs.shift()
     }
   }
 
-  fireRadialRingsOnce() {
-    if (this.fireTimeoutID) clearTimeout(this.fireTimeoutID)
-    this.fireTimeoutID = setTimeout(this.#fireRadialRings.bind(this), 20)
+  // fires a random attack from this.fireRadialMethods array
+  #fireRandomRadialAttack() {
+    // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/random
+    const fireMethodsIndex = Math.floor(Math.random() * this.fireRadialMethods.length) // Math.random() returns 0 to <1. Safe to floor the result and not get an out of bounds index
+    this.fireRadialMethods[fireMethodsIndex].bind(this)()
   }
 
-  fireRadialOnce() { // debounce function calls then call turret.fireRadial() binding current Turret instance as the context
+  debounceFire() { // debounce call for this turret to fire
     if (this.fireTimeoutID) clearTimeout(this.fireTimeoutID)
-    this.fireTimeoutID = setTimeout(this.#fireRadial.bind(this), 20)
+    this.fireTimeoutID = setTimeout(this.#fireRandomRadialAttack.bind(this), 20)
   }
 }
 
@@ -261,6 +265,11 @@ class AimedTurret extends Turret {
     this.colour = 'yellow'
     this.velY = canvas.height * (Math.random() * 0.0005 + 0.0005) // velocity varying between 0.05 to 0.1 % of canvas height
     this.randomYVelocity = this.velY
+    this.fireAimedMethods = [
+      this.#fireAimedInterval,
+      this.#fireAimed,
+      // TODO more methods
+    ]
   }
 
   #fireAimed() { // fires aimed projectiles
@@ -278,15 +287,20 @@ class AimedTurret extends Turret {
         setTimeout(this.#fireAimed.bind(this), i * 80)
       )
       // limit delayedTimeoutIDs array length to numAimedProjectiles
-      if (this.delayedTimeoutIDs.length > gameSettings.numAimedProjectiles) { // only works for a single turret firing 1 * numAimedProjectiles, perhaps need separate variable for max setTimeouts for AimedTurrets
-        this.delayedTimeoutIDs.shift()
-      }
+      // only works for a single turret firing 1 * numAimedProjectiles, maybe need separate variable for max setTimeouts for AimedTurrets
+      if (this.delayedTimeoutIDs.length > gameSettings.numAimedProjectiles) this.delayedTimeoutIDs.shift()
     }
   }
 
-  fireAimedOnce() { // debounces the calls to fire from gameLoop to this turret
+  // fires a random attack from this.fireAimedMethods array
+  #fireRandomAimedAttack() {
+    const fireMethodsIndex = Math.floor(Math.random() * this.fireAimedMethods.length)
+    this.fireAimedMethods[fireMethodsIndex].bind(this)()
+  }
+
+  debounceFire() { // debounces the calls to fire from gameLoop to this turret
     if (this.fireTimeoutID) clearTimeout(this.fireTimeoutID)
-    this.fireTimeoutID = setTimeout(this.#fireAimedInterval.bind(this), 20)
+    this.fireTimeoutID = setTimeout(this.#fireRandomAimedAttack.bind(this), 20)
   }
 }
 
@@ -461,14 +475,14 @@ function gameLoop(timeStamp) {
   // Fire aimed projectiles from turrets
   if (gameSettings.totalTime % 5000 < 20) {
     gameObjects.aimedTurrets.forEach((turret) => {
-      turret.fireAimedOnce()
+      turret.debounceFire()
     })
   }
 
   // Fire radial projectiles from turrets
   if (gameSettings.totalTime % 8000 < 20) {
     gameObjects.radialTurrets.forEach((turret) => {
-      turret.fireRadialRingsOnce()
+      turret.debounceFire()
     })
   }
 
@@ -540,9 +554,8 @@ function createAimedTurret(num, idleTime) { // creates num aimed turrets after s
       setTimeout(() => gameObjects.aimedTurrets.push(new AimedTurret()), randomTimeOffset + idleTime)
     )
     // limit timeoutID array length by max number of turrets that can be created at once
-    if (timeoutIDs.createTurretTimeoutIDs.length > gameSettings.maxAimedTurrets + gameSettings.maxRadialTurrets) {
-      timeoutIDs.createTurretTimeoutIDs.shift()
-    }
+    const maxCreated = gameSettings.maxAimedTurrets + gameSettings.maxRadialTurrets
+    if (timeoutIDs.createTurretTimeoutIDs.length > maxCreated) timeoutIDs.createTurretTimeoutIDs.shift()
   }
 }
 // Same as above but for radialTurrets
@@ -552,8 +565,7 @@ function createRadialTurret(num, idleTime) { // creates num radialTurrets after 
     timeoutIDs.createTurretTimeoutIDs.push(
       setTimeout(() => gameObjects.radialTurrets.push(new RadialTurret()), randomTimeOffset + idleTime)
     )
-    if (timeoutIDs.createTurretTimeoutIDs.length > gameSettings.maxAimedTurrets + gameSettings.maxRadialTurrets) {
-      timeoutIDs.createTurretTimeoutIDs.shift()
-    }
+    const maxCreated = gameSettings.maxAimedTurrets + gameSettings.maxRadialTurrets
+    if (timeoutIDs.createTurretTimeoutIDs.length > maxCreated) timeoutIDs.createTurretTimeoutIDs.shift()
   }
 }
