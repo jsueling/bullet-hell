@@ -10,21 +10,23 @@ const gameSettings = {
 
   maxRadialTurrets: 2, // maxTurret === currentTurret on game start
   currentRadialTurrets: 2,
-  numRadialProjectiles: 20, // increase turret number/maxProjectile number with duration/score
+  numRadialProjectiles: 10, // increase turret number/maxProjectile number with duration/score
   numRadialRings: 10,
 
-  maxAimedTurrets: 1,
-  currentAimedTurrets: 1,
+  maxAimedTurrets: 2,
+  currentAimedTurrets: 2,
   numAimedProjectiles: 30,
   // fireInterval: 5000, // TODO
   reset() {
     this.totalTime = 0
+
     this.maxRadialTurrets = 2
     this.currentRadialTurrets = 2
-    this.numRadialProjectiles = 20
+    this.numRadialProjectiles = 10
     this.numRadialRings = 10
-    this.maxAimedTurrets = 1
-    this.currentAimedTurrets = 1
+
+    this.maxAimedTurrets = 2
+    this.currentAimedTurrets = 2
     this.numAimedProjectiles = 30
   }
 }
@@ -202,14 +204,17 @@ class RadialTurret extends Turret {
     this.offSetCount = 1
     this.fireRadialMethods = [ // store function references in array https://stackoverflow.com/a/9792043
       this.#fireRadial,
-      this.#fireRadialRings,
+      this.#fireWindmillRings,
+      this.#fireFlowerRings,
+      this.#fireSpiralRings,
       // TODO more methods
     ]
   }
 
   #fireRadial() { // fires evenly spaced projectiles emitted from the centre of each turret
-    for (let i=0; i < gameSettings.numRadialProjectiles; i++) {
-      const slice = 2 * Math.PI / gameSettings.numRadialProjectiles;
+    const radialProjectiles = gameSettings.numRadialProjectiles * 10
+    for (let i=0; i < radialProjectiles; i++) {
+      const slice = 2 * Math.PI / radialProjectiles;
       const angle = slice * i;
       // assigns vectors that evenly distributes each radialProjectile around the unit circle
       gameObjects.radialProjectiles.push(new RadialProjectile(this.x, this.y, Math.cos(angle), Math.sin(angle)))
@@ -217,32 +222,63 @@ class RadialTurret extends Turret {
   }
 
   #windMillRing() { // Rings of Straight line + staggered line
-
     for (let j=0; j < gameSettings.numRadialProjectiles; j++) { // these rings do not accumulate offset, straight line
       const slice = 2 * Math.PI / gameSettings.numRadialProjectiles;
       const angle = slice * j;
       gameObjects.radialProjectiles.push(new RadialProjectile(this.x, this.y, Math.cos(angle), Math.sin(angle)))
     }
-
     for (let j=0; j < gameSettings.numRadialProjectiles; j++) { // these rings accumulate offset which staggers them
       const slice = 2 * Math.PI / gameSettings.numRadialProjectiles;
       const angle = this.offSet + slice * j;
       gameObjects.radialProjectiles.push(new RadialProjectile(this.x, this.y, Math.cos(angle), Math.sin(angle)))
     }
+    this.offSet += Math.PI * 0.02 // multiplication more efficient that dividing, accumulate offSet for each ring
+    this.offSetCount += 1
+  }
 
-    if (this.offSetCount % 2 == 0) { // offSet only increases every other call to it, staggers in lines of 2
-      this.offSet += Math.PI * 0.22 // multiplication more efficient that dividing, accumulate offSet for each ring. += Math.PI * 0.22 || Math.PI / 4.5 || 40° are the same
+  #flowerRing() {
+    const angle = this.offSet
+    gameObjects.radialProjectiles.push(new RadialProjectile(this.x, this.y, Math.cos(angle), Math.sin(angle)))
+    gameObjects.radialProjectiles.push(new RadialProjectile(this.x, this.y, Math.cos(-angle), Math.sin(-angle)))
+    if (this.offSetCount % 2 == 0) {
+      this.offSet += Math.PI * 0.22 // accumulate offSet for each ring
     }
     this.offSetCount += 1
   }
 
-  #fireRadialRings() {
+  #spiralRing() {
+    const angle = this.offSet
+    gameObjects.radialProjectiles.push(new RadialProjectile(this.x, this.y, Math.cos(angle), Math.sin(angle)))
+    this.offSet += Math.PI * 0.12
+  }
+
+  #fireSpiralRings() {
+    const spiralRings = gameSettings.numRadialProjectiles * 5
+    for (let i=0; i < spiralRings; i++) {
+      this.delayedTimeoutIDs.push(
+        setTimeout(this.#spiralRing.bind(this), i * 20)
+      )
+    }
+    while (this.delayedTimeoutIDs.length > spiralRings) this.delayedTimeoutIDs.shift()
+  }
+
+  #fireFlowerRings() { // 100 200 or 300 every 10ms, Maybe 10 * numRadialProjectiles
+    const numFlowerRings = 100 + 100 * Math.floor(Math.random() * 3)
+    for (let i=0; i < numFlowerRings; i++) {
+      this.delayedTimeoutIDs.push(
+        setTimeout(this.#flowerRing.bind(this), i * 10)
+      )
+    }
+    while (this.delayedTimeoutIDs.length > numFlowerRings) this.delayedTimeoutIDs.shift()
+  }
+
+  #fireWindmillRings() { // 10 every 120ms
     for (let i=0; i < gameSettings.numRadialRings; i++) { // 10 rings at 120ms interval
       this.delayedTimeoutIDs.push(
         setTimeout(this.#windMillRing.bind(this), i * 120) // bind this context when setTimeout calls the method of this turret
       )
       // FIFO only store the most recent delayedTimeoutIDs
-      if (this.delayedTimeoutIDs.length > gameSettings.numRadialRings) this.delayedTimeoutIDs.shift()
+      while (this.delayedTimeoutIDs.length > gameSettings.numRadialRings) this.delayedTimeoutIDs.shift()
     }
   }
 
@@ -480,7 +516,7 @@ function gameLoop(timeStamp) {
   }
 
   // Fire radial projectiles from turrets
-  if (gameSettings.totalTime % 8000 < 20) {
+  if (gameSettings.totalTime % 5000 < 20) {
     gameObjects.radialTurrets.forEach((turret) => {
       turret.debounceFire()
     })
