@@ -15,7 +15,7 @@ const gameSettings = {
 
   maxAimedTurrets: 2,
   currentAimedTurrets: 2,
-  numAimedProjectiles: 30,
+  numAimedProjectiles: 10,
   // fireInterval: 5000, // TODO
   reset() {
     this.totalTime = 0
@@ -27,7 +27,7 @@ const gameSettings = {
 
     this.maxAimedTurrets = 2
     this.currentAimedTurrets = 2
-    this.numAimedProjectiles = 30
+    this.numAimedProjectiles = 10
   }
 }
 
@@ -249,14 +249,14 @@ class RadialTurret extends Turret {
   #spiralRing() {
     const angle = this.offSet
     gameObjects.radialProjectiles.push(new RadialProjectile(this.x, this.y, Math.cos(angle), Math.sin(angle)))
-    this.offSet += Math.PI * 0.12
+    this.offSet += Math.PI * 0.33
   }
 
   #fireSpiralRings() {
-    const spiralRings = gameSettings.numRadialProjectiles * 5
+    const spiralRings = gameSettings.numRadialProjectiles * 10 * (1 + Math.floor(Math.random() * 3)) // 100, 200, 300, 400 rings
     for (let i=0; i < spiralRings; i++) {
       this.delayedTimeoutIDs.push(
-        setTimeout(this.#spiralRing.bind(this), i * 20)
+        setTimeout(this.#spiralRing.bind(this), i * 10)
       )
     }
     while (this.delayedTimeoutIDs.length > spiralRings) this.delayedTimeoutIDs.shift()
@@ -301,9 +301,11 @@ class AimedTurret extends Turret {
     this.colour = 'yellow'
     this.velY = canvas.height * (Math.random() * 0.0005 + 0.0005) // velocity varying between 0.05 to 0.1 % of canvas height
     this.randomYVelocity = this.velY
+    this.offSet = Math.PI * 0.03215
     this.fireAimedMethods = [
       this.#fireAimedInterval,
       this.#fireAimed,
+      this.#fireSpray,
       // TODO more methods
     ]
   }
@@ -324,7 +326,30 @@ class AimedTurret extends Turret {
       )
       // limit delayedTimeoutIDs array length to numAimedProjectiles
       // only works for a single turret firing 1 * numAimedProjectiles, maybe need separate variable for max setTimeouts for AimedTurrets
-      if (this.delayedTimeoutIDs.length > gameSettings.numAimedProjectiles) this.delayedTimeoutIDs.shift()
+      while (this.delayedTimeoutIDs.length > gameSettings.numAimedProjectiles) this.delayedTimeoutIDs.shift()
+    }
+  }
+
+  #sprayCone(num) {
+    // Math.atan2 https://math.stackexchange.com/a/2587852 https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/atan2
+    const angleFromTurretToCursor = Math.atan2(cursorObject.y - this.y, cursorObject.x - this.x)
+
+    // console.log(num); Todo, align cone with target
+    const startAngle = angleFromTurretToCursor - this.offSet * num/2
+
+    for (let i=0; i < num; i++) {
+      gameObjects.aimedProjectiles.push(new AimedProjectile(this.x, this.y, Math.cos(this.offSet * i + startAngle), Math.sin(this.offSet * i + startAngle)))
+    }
+  }
+
+  #fireSpray() {
+    const prjctls = gameSettings.numAimedProjectiles
+    for (let i=0; i < prjctls; i++) {
+      // console.log(prjctls-i-1);
+      this.delayedTimeoutIDs.push(
+        setTimeout(this.#sprayCone.bind(this, prjctls-i-1), i * 200)
+      )
+      while (this.delayedTimeoutIDs.length > prjctls) this.delayedTimeoutIDs.shift()
     }
   }
 
