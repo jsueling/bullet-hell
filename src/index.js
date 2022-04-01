@@ -1,4 +1,5 @@
 import './styles.css'
+import spaceStars from '../Space_stars2.svg'
 
 // using circular Projectile and CursorObject hitboxes to simplify collision detection and improve performance
 
@@ -210,12 +211,18 @@ class RadialTurret extends Turret {
 
   #fireRadial() { // fires evenly spaced projectiles emitted from the centre of each turret
     const radialProjectiles = gameSettings.numRadialProjectiles * 5
-    // TODO Gap in circle
+
+    const randomPartition = (Math.random() * Math.PI) + Math.PI // varies between Pi and 2Pi radians
+
     for (let i=0; i < radialProjectiles; i++) {
       const slice = 2 * Math.PI / radialProjectiles;
       const angle = slice * i;
+
+      // calculate a randomPartition angle on lower half of circle then skip firing projectiles in a 5% range either side
+      if (angle > randomPartition * 0.95 && angle < randomPartition * 1.05) continue
+
       // assigns vectors that evenly distributes each radialProjectile around the unit circle
-      gameObjects.radialProjectiles.push(new RadialProjectile(this.x, this.y, Math.cos(angle), Math.sin(angle)))
+      gameObjects.radialProjectiles.push(new RadialProjectile(this.x, this.y, Math.cos(angle), Math.sin(-angle))) // correct for down increasing y
     }
   }
 
@@ -304,7 +311,7 @@ class AimedTurret extends Turret {
     ]
   }
 
-  #fireAimed() { // fires aimed projectiles
+  #fireAimed() { // fires a projectile targeting the cursor
     const dist = Math.sqrt((this.x - cursorObject.x)**2 + (this.y - cursorObject.y)**2)
     const velX = (cursorObject.x - this.x) / dist // normalized vectors pointing from the turret to the cursor
     const velY = (cursorObject.y - this.y) / dist
@@ -321,7 +328,7 @@ class AimedTurret extends Turret {
     }
   }
 
-  #fireConeRow(rowLen) { // fires a single row from #coneAttack
+  #fireConeRow(rowLen) { // fires a single row centered targeting the cursor
 
     // Math.atan2 https://math.stackexchange.com/a/2587852 https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/atan2
     const angleFromTurretToCursor = Math.atan2(cursorObject.y - this.y, cursorObject.x - this.x)
@@ -380,7 +387,11 @@ function init() {
   canvas.height = window.innerHeight
 
   cursorObject.init() // cursorObject size is responsive to canvas height
-  
+
+  const img = new Image() // TODO
+  img.src = spaceStars
+  img.onload = () => ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+
   ctx.font = `${canvas.width * 0.02}px Arial`
   ctx.textBaseline = 'middle'
   ctx.textAlign = 'center'
