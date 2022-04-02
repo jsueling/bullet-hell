@@ -6,6 +6,11 @@ import spaceStars from '../Space_stars2.svg'
 let canvas
 let ctx
 
+// background image + y pointer
+const img = new Image()
+img.src = spaceStars
+let y = 0
+
 const gameSettings = {
   totalTime: 0, // window loses focus but score ticks up https://developer.mozilla.org/en-US/docs/Web/API/Window/focus_event
 
@@ -388,10 +393,6 @@ function init() {
 
   cursorObject.init() // cursorObject size is responsive to canvas height
 
-  const img = new Image() // TODO
-  img.src = spaceStars
-  img.onload = () => ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
-
   ctx.font = `${canvas.width * 0.02}px Arial`
   ctx.textBaseline = 'middle'
   ctx.textAlign = 'center'
@@ -461,6 +462,12 @@ function drawScore() {
 
 function gameLoop(timeStamp) {
   ctx.clearRect(0, 0, canvas.width, canvas.height)
+
+  // 2 images stacked vertically
+  ctx.drawImage(img, 0, y, canvas.width, canvas.height)
+  ctx.drawImage(img, 0, y-canvas.height, canvas.width, canvas.height)
+  if (y > canvas.height) y = 0 // reset to original
+  y += 20
 
   // ctx.save()
   // ctx.fillStyle = 'rgba(0, 0, 0, 0.3)' // cheap trail effect
