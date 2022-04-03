@@ -6,11 +6,6 @@ import spaceStars from '../Space_stars2.svg'
 let canvas
 let ctx
 
-// background image + y pointer
-const img = new Image()
-img.src = spaceStars
-let y = 0
-
 const gameSettings = {
   totalTime: 0, // window loses focus but score ticks up https://developer.mozilla.org/en-US/docs/Web/API/Window/focus_event
 
@@ -68,6 +63,28 @@ const gameTimers = {
   oldTimeStamp: undefined,
   reset() {
     // empty
+  }
+}
+
+const frame1 = new Image()
+frame1.src = spaceStars
+// const frame2 = new Image()
+// frame2.src = 
+// const frame3 = new Image()
+// frame3.src = 
+// const frame4 = new Image()
+// frame4.src = 
+
+const frames = [frame1, /* frame2, frame3, frame4 */]
+
+const background = {
+  yOffset: 0,
+  frameIndex: 0,
+  frameIndexInterval: undefined,
+  reset() {
+    clearInterval(this.frameIndexInterval)
+    this.yOffset = 0,
+    this.frameIndex = 0
   }
 }
 
@@ -137,7 +154,7 @@ class Projectile {
 class RadialProjectile extends Projectile {
   constructor(x, y, velX, velY) {
     super(x, y, velX, velY)
-    this.colour = 'white'
+    this.colour = 'violet'
     this.radius = canvas.height * 0.003
   }
 }
@@ -403,14 +420,11 @@ function init() {
 }
 
 function startMenu() {
-  const menuText = 'CLICK TO START'
-
-  ctx.save()
-  ctx.translate(canvas.width/2, canvas.height/2)
-  ctx.fillText(menuText, 0, 0)
-  ctx.restore()
-
-  document.addEventListener('click', clickListener)
+  const startButton = document.getElementById('startButton')
+  // show button and add event listener to it to start the game
+  startButton.addEventListener('click', clickListener)
+  startButton.style.display = 'block'
+  ctx.drawImage(frame1, 0, 0, canvas.width, canvas.height) // always start with frame1
 }
 
 function clickListener() {
@@ -418,7 +432,14 @@ function clickListener() {
 }
 
 function startGame() {
-  document.removeEventListener('click', clickListener)
+  const startButton = document.getElementById('startButton')
+  // remove button as game starts
+  startButton.style.display = 'none'
+
+  // initialize background animation
+  background.frameIndexInterval = setInterval(() => {
+    background.frameIndex++
+  }, 2000)
 
   // initialize cursor
   cursorObject.x = canvas.width/2
@@ -449,6 +470,7 @@ function resetGame() {
   gameSettings.reset()
   timeoutIDs.reset()
   gameTimers.reset()
+  background.reset()
 }
 
 function drawScore() {
@@ -461,13 +483,19 @@ function drawScore() {
 }
 
 function gameLoop(timeStamp) {
-  ctx.clearRect(0, 0, canvas.width, canvas.height)
+  // ctx.clearRect(0, 0, canvas.width, canvas.height)
+
+  // TODO Implement
+  // ctx.drawImage(frames[background.frameIndex], 0, background.yOffset, canvas.width, canvas.height)
+  // ctx.drawImage(frames[background.frameIndex], 0, background.yOffset - canvas.height, canvas.width, canvas.height)
+  //  if (background.yOffset > canvas.height) background.yOffset = 0 // reset to original
+  // background.yOffset += 2
 
   // 2 images stacked vertically
-  ctx.drawImage(img, 0, y, canvas.width, canvas.height)
-  ctx.drawImage(img, 0, y-canvas.height, canvas.width, canvas.height)
-  if (y > canvas.height) y = 0 // reset to original
-  y += 20
+  ctx.drawImage(frame1, 0, background.yOffset, canvas.width, canvas.height)
+  ctx.drawImage(frame1, 0, background.yOffset - canvas.height, canvas.width, canvas.height)
+  if (background.yOffset > canvas.height) background.yOffset = 0 // reset to original
+  background.yOffset += 2
 
   // ctx.save()
   // ctx.fillStyle = 'rgba(0, 0, 0, 0.3)' // cheap trail effect
