@@ -1,5 +1,7 @@
 import './styles.css'
-import spaceStars from '../Space_stars2.svg'
+import spaceStars1 from '../assets/spaceStars1.svg'
+import spaceStars2 from '../assets/spaceStars2.svg'
+import spaceStars3 from '../assets/spaceStars3.svg'
 
 // using circular Projectile and CursorObject hitboxes to simplify collision detection and improve performance
 
@@ -67,15 +69,14 @@ const gameTimers = {
 }
 
 const frame1 = new Image()
-frame1.src = spaceStars
-// const frame2 = new Image()
-// frame2.src = 
-// const frame3 = new Image()
-// frame3.src = 
-// const frame4 = new Image()
-// frame4.src = 
+const frame2 = new Image()
+const frame3 = new Image()
+frame1.src = spaceStars1
+frame2.src = spaceStars2
+frame3.src = spaceStars3
 
-const frames = [frame1, /* frame2, frame3, frame4 */]
+// repeat frame 2, stars expanding then contracting in brightness and colour
+const frames = [frame1, frame2, frame3, frame2]
 
 const background = {
   yOffset: 0,
@@ -439,7 +440,7 @@ function startGame() {
   // initialize background animation
   background.frameIndexInterval = setInterval(() => {
     background.frameIndex++
-  }, 2000)
+  }, 1000)
 
   // initialize cursor
   cursorObject.x = canvas.width/2
@@ -483,17 +484,10 @@ function drawScore() {
 }
 
 function gameLoop(timeStamp) {
-  // ctx.clearRect(0, 0, canvas.width, canvas.height)
+  ctx.clearRect(0, 0, canvas.width, canvas.height)
 
-  // TODO Implement
-  // ctx.drawImage(frames[background.frameIndex], 0, background.yOffset, canvas.width, canvas.height)
-  // ctx.drawImage(frames[background.frameIndex], 0, background.yOffset - canvas.height, canvas.width, canvas.height)
-  //  if (background.yOffset > canvas.height) background.yOffset = 0 // reset to original
-  // background.yOffset += 2
-
-  // 2 images stacked vertically
-  ctx.drawImage(frame1, 0, background.yOffset, canvas.width, canvas.height)
-  ctx.drawImage(frame1, 0, background.yOffset - canvas.height, canvas.width, canvas.height)
+  ctx.drawImage(frames[background.frameIndex % frames.length], 0, background.yOffset, canvas.width, canvas.height)
+  ctx.drawImage(frames[background.frameIndex % frames.length], 0, background.yOffset - canvas.height, canvas.width, canvas.height)
   if (background.yOffset > canvas.height) background.yOffset = 0 // reset to original
   background.yOffset += 2
 
