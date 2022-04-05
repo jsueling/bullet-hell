@@ -13,7 +13,7 @@ const startButton = document.getElementById('startButton')
 startButton.addEventListener('click', startGame)
 
 const gameSettings = {
-  totalTime: 0, // window loses focus but score ticks up https://developer.mozilla.org/en-US/docs/Web/API/Window/focus_event
+  totalTime: 0,
 
   maxRadialTurrets: 2, // maxTurret === currentTurret on game start
   currentRadialTurrets: 2,
@@ -67,9 +67,7 @@ const gameObjects = {
 const gameTimers = {
   elapsedMs: undefined,
   oldTimeStamp: undefined,
-  reset() {
-    // empty
-  }
+  paused: false,
 }
 
 const frame1 = new Image()
@@ -79,7 +77,7 @@ frame1.src = spaceStars1
 frame2.src = spaceStars2
 frame3.src = spaceStars3
 
-// repeat frame 2, stars expanding then contracting in brightness and colour
+// repeat frame2 after frame3, stars expanding then contracting in brightness and colour i.e. 12321232
 const frames = [frame1, frame2, frame3, frame2]
 
 const background = {
@@ -402,6 +400,15 @@ window.onresize = function() {
   }, 100)
 }
 
+window.onblur = function() {
+  gameTimers.paused = true 
+}
+
+window.onfocus = function() {
+  gameTimers.paused = false // simplest implementation for pause out of focus:
+  gameTimers.oldTimeStamp = performance.now() // window lost focus but score/gameSettings.totalTime ticks up
+}
+
 window.onmousemove = function(e) {
   cursorObject.x = e.x
   cursorObject.y = e.y
@@ -471,7 +478,6 @@ function resetGame() {
   gameObjects.reset()
   gameSettings.reset()
   timeoutIDs.reset()
-  gameTimers.reset()
   background.reset()
 }
 
@@ -502,7 +508,9 @@ function gameLoop(timeStamp) {
   gameTimers.elapsedMs = (timeStamp - gameTimers.oldTimeStamp) // milliseconds passed since last call to gameLoop
   gameTimers.oldTimeStamp = timeStamp
 
-  gameSettings.totalTime += gameTimers.elapsedMs
+  if (!gameTimers.paused) { // when game is not paused (window in focus) totalTime/score can increase
+    gameSettings.totalTime += gameTimers.elapsedMs
+  }
 
   // if (gameSettings.totalTime % 10000 < 50) { // increase difficulty every 10s
   //   increaseDifficulty()
