@@ -1,4 +1,4 @@
-#canvas1 {
+#gameCanvas {
   cursor: none;
   position: absolute;
   background: black;
@@ -8,13 +8,27 @@
   left: 0;
 }
 
+#menuScreen {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+}
+
 #startButton {
+  cursor: pointer;
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
   font-size: 3vw;
-  padding: 1vw;
+  padding: 0.5vw;
   background: black;
   color: white;
+}
+
+#startButton:hover {
+  background: white;
+  color: black;
 }

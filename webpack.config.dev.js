@@ -20,13 +20,15 @@ module.exports = {
       },
       {
         test: /\.(png|svg|jpg|jpeg|gif)$/i,
-        use: ['file-loader'],
+        loader: 'file-loader',
       },
     ],
   },
   plugins: [
     new HtmlWebpackPlugin({
-      template: './public/index.html'
+      template: './public/index.html',
+      // favicon: 'assets/favicon.ico',
+      // title: TODO
     })
   ]
 };

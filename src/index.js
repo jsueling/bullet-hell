@@ -8,6 +8,10 @@ import spaceStars3 from '../assets/spaceStars3.svg'
 let canvas
 let ctx
 
+const menuScreen = document.getElementById('menuScreen')
+const startButton = document.getElementById('startButton')
+startButton.addEventListener('click', startGame)
+
 const gameSettings = {
   totalTime: 0, // window loses focus but score ticks up https://developer.mozilla.org/en-US/docs/Web/API/Window/focus_event
 
@@ -404,12 +408,12 @@ window.onmousemove = function(e) {
 }
 
 function init() {
-  canvas = document.getElementById('canvas1')
+  canvas = document.getElementById('gameCanvas')
   ctx = canvas.getContext('2d')
   canvas.width = window.innerWidth
   canvas.height = window.innerHeight
 
-  cursorObject.init() // cursorObject size is responsive to canvas height
+  cursorObject.init() // initialize cursorObject size to be responsive to canvas height
 
   ctx.font = `${canvas.width * 0.02}px Arial`
   ctx.textBaseline = 'middle'
@@ -421,28 +425,25 @@ function init() {
 }
 
 function startMenu() {
-  const startButton = document.getElementById('startButton')
-  // show button and add event listener to it to start the game
-  startButton.addEventListener('click', clickListener)
+  // show button and menu
   startButton.style.display = 'block'
-  ctx.drawImage(frame1, 0, 0, canvas.width, canvas.height) // always start with frame1
-}
+  menuScreen.style.display = 'block'
 
-function clickListener() {
-  startGame()
+  // draw the first frame of background animation
+  ctx.drawImage(frame1, 0, 0, canvas.width, canvas.height)
 }
 
 function startGame() {
-  const startButton = document.getElementById('startButton')
-  // remove button as game starts
+  // remove button + menuScreen as game starts
   startButton.style.display = 'none'
+  menuScreen.style.display = 'none'
 
   // initialize background animation
   background.frameIndexInterval = setInterval(() => {
     background.frameIndex++
   }, 1000)
 
-  // initialize cursor
+  // initialize cursorObject position and fireInterval
   cursorObject.x = canvas.width/2
   cursorObject.y = canvas.height/2
   cursorObject.startFireInterval()
@@ -486,6 +487,7 @@ function drawScore() {
 function gameLoop(timeStamp) {
   ctx.clearRect(0, 0, canvas.width, canvas.height)
 
+  // Endless background scroll
   ctx.drawImage(frames[background.frameIndex % frames.length], 0, background.yOffset, canvas.width, canvas.height)
   ctx.drawImage(frames[background.frameIndex % frames.length], 0, background.yOffset - canvas.height, canvas.width, canvas.height)
   if (background.yOffset > canvas.height) background.yOffset = 0 // reset to original
@@ -496,6 +498,7 @@ function gameLoop(timeStamp) {
   // ctx.fillRect(0, 0, canvas.width, canvas.height)
   // ctx.restore()
 
+  // Record game time
   gameTimers.elapsedMs = (timeStamp - gameTimers.oldTimeStamp) // milliseconds passed since last call to gameLoop
   gameTimers.oldTimeStamp = timeStamp
 
