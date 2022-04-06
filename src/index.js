@@ -1,7 +1,4 @@
 import './styles.css'
-import spaceStars1 from '../assets/spaceStars1.svg'
-import spaceStars2 from '../assets/spaceStars2.svg'
-import spaceStars3 from '../assets/spaceStars3.svg'
 
 // using circular Projectile and CursorObject hitboxes to simplify collision detection and improve performance
 
@@ -22,6 +19,7 @@ const gameSettings = {
   maxAimedTurrets: 2,
   currentAimedTurrets: 2,
   numAimedProjectiles: 5,
+  numStars: 50,
   // fireInterval: 5000, // TODO
   reset() {
     this.totalTime = 0
@@ -49,6 +47,7 @@ const gameObjects = {
   aimedTurrets: [],
   aimedProjectiles: [],
   playerProjectiles: [],
+  stars: [],
   reset() {
     this.radialTurrets.forEach((turret) => {
       turret.stopFiring()
@@ -61,6 +60,7 @@ const gameObjects = {
     this.aimedTurrets = []
     this.aimedProjectiles = []
     this.playerProjectiles = []
+    this.stars = []
   }
 }
 
@@ -68,27 +68,6 @@ const gameTimers = {
   elapsedMs: undefined,
   oldTimeStamp: undefined,
   paused: false,
-}
-
-const frame1 = new Image()
-const frame2 = new Image()
-const frame3 = new Image()
-frame1.src = spaceStars1
-frame2.src = spaceStars2
-frame3.src = spaceStars3
-
-// repeat frame2 after frame3, stars expanding then contracting in brightness and colour i.e. 12321232
-const frames = [frame1, frame2, frame3, frame2]
-
-const background = {
-  yOffset: 0,
-  frameIndex: 0,
-  frameIndexInterval: undefined,
-  reset() {
-    clearInterval(this.frameIndexInterval)
-    this.yOffset = 0,
-    this.frameIndex = 0
-  }
 }
 
 const timeoutIDs = {
@@ -130,6 +109,34 @@ const cursorObject = {
   }
 }
 
+class Star {
+  constructor() {
+    this.x = Math.random() * canvas.width
+    this.y = Math.random() * canvas.height
+    this.velY = canvas.height * (Math.random() * 0.0005 + 0.0005) // 0.05 to 0.1% of canvas height
+    this.radius = canvas.height * (Math.random() * 0.001 + 0.00005) // 0.005 to 0.105% of canvas height
+  }
+
+  update() {
+    this.y += this.velY
+    if (this.y > canvas.height + this.radius) {
+      this.x = Math.random() * canvas.width // Out of bounds, assign new random x position
+      this.y = -this.radius
+    }
+  }
+
+  draw() { // TODO https://stackoverflow.com/questions/41371850/html-canvas-why-does-a-large-shadow-blur-not-show-up-for-small-objects
+    ctx.save()
+    ctx.fillStyle = 'white'
+    ctx.shadowColor = 'white'
+    ctx.shadowBlur = canvas.height * 0.01 // 15
+    ctx.beginPath()
+    ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI)
+    ctx.fill()
+    ctx.restore()
+  }
+}
+
 class Projectile {
   constructor(x, y, velX, velY) {
     this.x = x
@@ -140,6 +147,8 @@ class Projectile {
 
   draw() {
     ctx.save()
+    ctx.shadowBlur = canvas.height * 0.01
+    ctx.shadowColor = this.colour
     ctx.translate(this.x, this.y)
     ctx.fillStyle = this.colour
     ctx.beginPath()
@@ -422,12 +431,6 @@ function init() {
 
   cursorObject.init() // initialize cursorObject size to be responsive to canvas height
 
-  ctx.font = `${canvas.width * 0.02}px Arial`
-  ctx.textBaseline = 'middle'
-  ctx.textAlign = 'center'
-  ctx.fillStyle = 'white'
-  ctx.strokeStyle = 'white'
-
   startMenu()
 }
 
@@ -436,19 +439,21 @@ function startMenu() {
   startButton.style.display = 'block'
   menuScreen.style.display = 'block'
 
-  // draw the first frame of background animation
-  ctx.drawImage(frame1, 0, 0, canvas.width, canvas.height)
+  // initialize all stars
+  for (let i=0; i < gameSettings.numStars; i++) {
+    gameObjects.stars.push(new Star())
+  }
+
+  // draw the first frame of stars animation
+  gameObjects.stars.forEach((star) => {
+    star.draw()
+  })
 }
 
 function startGame() {
   // remove button + menuScreen as game starts
   startButton.style.display = 'none'
   menuScreen.style.display = 'none'
-
-  // initialize background animation
-  background.frameIndexInterval = setInterval(() => {
-    background.frameIndex++
-  }, 1000)
 
   // initialize cursorObject position and fireInterval
   cursorObject.x = canvas.width/2
@@ -478,31 +483,31 @@ function resetGame() {
   gameObjects.reset()
   gameSettings.reset()
   timeoutIDs.reset()
-  background.reset()
 }
 
 function drawScore() {
   const seconds = Math.round(gameSettings.totalTime/1000)
   ctx.save()
   ctx.fillStyle = 'white'
+  ctx.font = `${(canvas.width + canvas.height) * 0.01}px Times New Roman`
   ctx.translate(canvas.width * 0.1, canvas.height * 0.1) // score is time in seconds alive
   ctx.fillText(seconds, 0, 0)
   ctx.restore()
 }
 
 function gameLoop(timeStamp) {
-  ctx.clearRect(0, 0, canvas.width, canvas.height)
+  // ctx.clearRect(0, 0, canvas.width, canvas.height)
 
-  // Endless background scroll
-  ctx.drawImage(frames[background.frameIndex % frames.length], 0, background.yOffset, canvas.width, canvas.height)
-  ctx.drawImage(frames[background.frameIndex % frames.length], 0, background.yOffset - canvas.height, canvas.width, canvas.height)
-  if (background.yOffset > canvas.height) background.yOffset = 0 // reset to original
-  background.yOffset += 2
+  // animate background stars
+  gameObjects.stars.forEach((star) => {
+    star.update()
+    star.draw()
+  })
 
-  // ctx.save()
-  // ctx.fillStyle = 'rgba(0, 0, 0, 0.3)' // cheap trail effect
-  // ctx.fillRect(0, 0, canvas.width, canvas.height)
-  // ctx.restore()
+  ctx.save()
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.5)' // cheap trail effect
+  ctx.fillRect(0, 0, canvas.width, canvas.height)
+  ctx.restore()
 
   // Record game time
   gameTimers.elapsedMs = (timeStamp - gameTimers.oldTimeStamp) // milliseconds passed since last call to gameLoop
@@ -516,8 +521,8 @@ function gameLoop(timeStamp) {
   //   increaseDifficulty()
   // }
 
-  cursorObject.draw()
   drawScore()
+  cursorObject.draw()
 
   // Player projectiles
   for (let i=0; i < gameObjects.playerProjectiles.length; i++) {
