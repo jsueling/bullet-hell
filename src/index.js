@@ -2,9 +2,8 @@ import './styles.css'
 
 // using circular Projectile and CursorObject hitboxes to simplify collision detection and improve performance
 
-let canvas
-let ctx
-
+const canvas = document.getElementById('gameCanvas')
+const ctx = canvas.getContext('2d')
 const menuScreen = document.getElementById('menuScreen')
 const startButton = document.getElementById('startButton')
 startButton.addEventListener('click', startGame)
@@ -424,8 +423,7 @@ window.onmousemove = function(e) {
 }
 
 function init() {
-  canvas = document.getElementById('gameCanvas')
-  ctx = canvas.getContext('2d')
+  // responsive width and height
   canvas.width = window.innerWidth
   canvas.height = window.innerHeight
 
@@ -461,8 +459,8 @@ function startGame() {
   cursorObject.startFireInterval()
 
   // initialize turrets
-  createRadialTurret(gameSettings.maxRadialTurrets, 2000) // spawns within 2-3 seconds of being called
-  createAimedTurret(gameSettings.maxAimedTurrets, 2000)
+  createTurret(gameSettings.maxRadialTurrets, 2000, 'radial') // spawns within 2-3 seconds of being called
+  createTurret(gameSettings.maxAimedTurrets, 2000, 'aimed')
 
   // https://developer.mozilla.org/en-US/docs/Web/API/window/requestAnimationFrame#parameters
   // performance.now() returns DOMHighResTimeStamp which is the same format as the timeStamp
@@ -489,7 +487,9 @@ function drawScore() {
   const seconds = Math.round(gameSettings.totalTime/1000)
   ctx.save()
   ctx.fillStyle = 'white'
-  ctx.font = `${(canvas.width + canvas.height) * 0.01}px Times New Roman`
+  ctx.font = `${(canvas.width + canvas.height) * 0.01}px Play`
+  ctx.shadowColor = 'white'
+  ctx.shadowBlur = 4
   ctx.translate(canvas.width * 0.1, canvas.height * 0.1) // score is time in seconds alive
   ctx.fillText(seconds, 0, 0)
   ctx.restore()
@@ -564,14 +564,14 @@ function gameLoop(timeStamp) {
     // store number of replacements needed
     const replacements = gameSettings.maxRadialTurrets - gameSettings.currentRadialTurrets
     // creates all turrets needed for replacement after some timer
-    createRadialTurret(replacements, 5000) // adjust respawn rate with difficulty
+    createTurret(replacements, 5000, 'radial') // adjust respawn rate with difficulty
     // Prevent re-entering this conditional on next frame, replacements have been ordered
     gameSettings.currentRadialTurrets = gameSettings.maxRadialTurrets
   }
   // same as above but with aimed turrets
   if (gameSettings.currentAimedTurrets < gameSettings.maxAimedTurrets) {
     const replacements = gameSettings.maxAimedTurrets - gameSettings.currentAimedTurrets
-    createAimedTurret(replacements, 5000)
+    createTurret(replacements, 5000, 'aimed')
     gameSettings.currentAimedTurrets = gameSettings.maxAimedTurrets
   }
   /**
@@ -653,26 +653,24 @@ function circleCollides (A, B) { // returns boolean based on whether circle obje
   return false
 }
 
-function createAimedTurret(num, idleTime) { // creates num aimed turrets after some idleTime
+function createTurret(num, idleTime, turretType) { // creates turrets after some idleTime
   for (let i=0; i < num; i++) {
     // random time offset from 0 to 50% of initial idleTime
     const randomTimeOffset = Math.floor((idleTime * 0.5) * Math.random())
     timeoutIDs.createTurretTimeoutIDs.push(
-      setTimeout(() => gameObjects.aimedTurrets.push(new AimedTurret()), randomTimeOffset + idleTime)
+      setTimeout(() => {
+        switch (turretType) {
+          case 'aimed':
+            gameObjects.aimedTurrets.push(new AimedTurret())
+            break
+          case 'radial':
+            gameObjects.radialTurrets.push(new RadialTurret())
+            break
+        }
+      }, randomTimeOffset + idleTime)
     )
     // limit timeoutID array length by max number of turrets that can be created at once
     const maxCreated = gameSettings.maxAimedTurrets + gameSettings.maxRadialTurrets
-    if (timeoutIDs.createTurretTimeoutIDs.length > maxCreated) timeoutIDs.createTurretTimeoutIDs.shift()
-  }
-}
-// Same as above but for radialTurrets
-function createRadialTurret(num, idleTime) { // creates num radialTurrets after some idleTime
-  for (let i=0; i < num; i++) {
-    const randomTimeOffset = Math.floor((idleTime * 0.5) * Math.random())
-    timeoutIDs.createTurretTimeoutIDs.push(
-      setTimeout(() => gameObjects.radialTurrets.push(new RadialTurret()), randomTimeOffset + idleTime)
-    )
-    const maxCreated = gameSettings.maxAimedTurrets + gameSettings.maxRadialTurrets
-    if (timeoutIDs.createTurretTimeoutIDs.length > maxCreated) timeoutIDs.createTurretTimeoutIDs.shift()
+    while (timeoutIDs.createTurretTimeoutIDs.length > maxCreated) timeoutIDs.createTurretTimeoutIDs.shift()
   }
 }
