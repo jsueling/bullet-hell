@@ -19,6 +19,7 @@ const gameSettings = {
   currentAimedTurrets: 2,
   numAimedProjectiles: 5,
   numStars: 50,
+  explosionDensity: 20,
   // fireInterval: 5000, // TODO
   reset() {
     this.totalTime = 0
@@ -47,6 +48,7 @@ const gameObjects = {
   aimedProjectiles: [],
   playerProjectiles: [],
   stars: [],
+  explosionParticles: [],
   reset() {
     this.radialTurrets.forEach((turret) => {
       turret.stopFiring()
@@ -60,6 +62,7 @@ const gameObjects = {
     this.aimedProjectiles = []
     this.playerProjectiles = []
     this.stars = []
+    this.explosionParticles = []
   }
 }
 
@@ -105,6 +108,38 @@ const cursorObject = {
   },
   startFireInterval() {
     timeoutIDs.cursorObjectfireInterval = setInterval(this.fire.bind(this), 500)
+  }
+}
+
+class Particle {
+  constructor(x, y, colour) {
+    this.x = x
+    this.y = y
+    this.velX = (Math.random() - 0.5) * 2
+    this.velY = (Math.random() - 0.5) * 2
+    this.radius = canvas.height * 0.003
+    this.colour = colour
+    this.opacity = 1
+  }
+
+  update() {
+    this.x += this.velX
+    this.y += this.velY
+    this.opacity *= 0.95 // fade out particles in size and opacity
+    if (this.radius > 0) this.radius *= 0.98
+  }
+
+  draw() {
+    ctx.save()
+    ctx.translate(this.x, this.y)
+    ctx.globalAlpha = this.opacity
+    ctx.shadowBlur = canvas.height * 0.01
+    ctx.shadowColor = this.colour
+    ctx.fillStyle = this.colour
+    ctx.beginPath()
+    ctx.arc(0, 0, this.radius, 0, 2 * Math.PI)
+    ctx.fill()
+    ctx.restore()
   }
 }
 
@@ -539,18 +574,32 @@ function gameLoop(timeStamp) {
 
     // player projectiles colliding with turrets removes them
     for (let j=0; j < gameObjects.radialTurrets.length; j++) {
+
       const turret = gameObjects.radialTurrets[j]
+
       if (circleCollides(projectile, turret)) {
+        // create explosion particles at collision site
+        for (let k=0; k < gameSettings.explosionDensity; k++) {
+          gameObjects.explosionParticles.push(new Particle(turret.x, turret.y, turret.colour))
+        }
+        // stop the turret's current delayed fire methods
         turret.stopFiring()
+        // remove the turret
         gameObjects.radialTurrets.splice(j, 1)
         j--
+        // update currentTurrets
         gameSettings.currentRadialTurrets--
       }
     }
 
     for (let j=0; j < gameObjects.aimedTurrets.length; j++) {
+
       const turret = gameObjects.aimedTurrets[j]
+
       if (circleCollides(projectile, turret)) {
+        for (let k=0; k < gameSettings.explosionDensity ; k++) {
+          gameObjects.explosionParticles.push(new Particle(turret.x, turret.y, turret.colour))
+        }
         turret.stopFiring()
         gameObjects.aimedTurrets.splice(j, 1)
         j--
@@ -559,15 +608,32 @@ function gameLoop(timeStamp) {
     }
   }
 
+  // particles for destroyed turret explosion animation
+  for (let i=0; i < gameObjects.explosionParticles.length; i++) {
+
+    const particle = gameObjects.explosionParticles[i]
+    particle.update()
+    particle.draw()
+    // remove particles that have faded out enough
+    if (particle.opacity <= 0.1) {
+      gameObjects.explosionParticles.splice(i, 1)
+      i--
+    }
+  }
+
   // Replacing turrets destroyed by the player or as difficulty increases if maxTurrets variable increases
   if (gameSettings.currentRadialTurrets < gameSettings.maxRadialTurrets) {
+
     // store number of replacements needed
     const replacements = gameSettings.maxRadialTurrets - gameSettings.currentRadialTurrets
+
     // creates all turrets needed for replacement after some timer
     createTurret(replacements, 5000, 'radial') // adjust respawn rate with difficulty
+
     // Prevent re-entering this conditional on next frame, replacements have been ordered
     gameSettings.currentRadialTurrets = gameSettings.maxRadialTurrets
   }
+
   // same as above but with aimed turrets
   if (gameSettings.currentAimedTurrets < gameSettings.maxAimedTurrets) {
     const replacements = gameSettings.maxAimedTurrets - gameSettings.currentAimedTurrets
