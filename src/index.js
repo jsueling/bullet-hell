@@ -19,7 +19,7 @@ const gameSettings = {
   currentAimedTurrets: 2,
   numAimedProjectiles: 5,
   numStars: 50,
-  explosionDensity: 20,
+  explosionDensity: 50,
   // fireInterval: 5000, // TODO
   reset() {
     this.totalTime = 0
@@ -115,9 +115,9 @@ class Particle {
   constructor(x, y, colour) {
     this.x = x
     this.y = y
-    this.velX = (Math.random() - 0.5) * 2
-    this.velY = (Math.random() - 0.5) * 2
-    this.radius = canvas.height * 0.003
+    this.velX = (Math.random() - 0.5) * Math.random() * canvas.height * 0.002 // Speed vector given to the particle within square box around it scaled by random magnitude
+    this.velY = (Math.random() - 0.5) * Math.random() * canvas.height * 0.002
+    this.radius = canvas.height * 0.002 + Math.random() * canvas.height * 0.002 // random radius with minimum
     this.colour = colour
     this.opacity = 1
   }
@@ -125,7 +125,7 @@ class Particle {
   update() {
     this.x += this.velX
     this.y += this.velY
-    this.opacity *= 0.95 // fade out particles in size and opacity
+    this.opacity *= 0.97 // fade out particles in size and opacity
     if (this.radius > 0) this.radius *= 0.98
   }
 
@@ -148,7 +148,7 @@ class Star {
     this.x = Math.random() * canvas.width
     this.y = Math.random() * canvas.height
     this.velY = canvas.height * (Math.random() * 0.0005 + 0.0005) // 0.05 to 0.1% of canvas height
-    this.radius = canvas.height * (Math.random() * 0.001 + 0.00005) // 0.005 to 0.105% of canvas height
+    this.radius = canvas.height * (Math.random() * 0.0009 + 0.0001) // 0.005 to 0.105% of canvas height
   }
 
   update() {
@@ -159,7 +159,17 @@ class Star {
     }
   }
 
-  draw() { // TODO https://stackoverflow.com/questions/41371850/html-canvas-why-does-a-large-shadow-blur-not-show-up-for-small-objects
+  draw() {
+    // transparent larger circle drawn behind gives bigger shadowblur https://stackoverflow.com/a/41372024
+    ctx.save()
+    ctx.fillStyle = 'none'
+    ctx.shadowColor = 'white'
+    ctx.shadowBlur = canvas.height * 0.02
+    ctx.beginPath()
+    ctx.arc(this.x, this.y, this.radius* 3, 0, 2 * Math.PI)
+    ctx.fill()
+    ctx.restore()
+
     ctx.save()
     ctx.fillStyle = 'white'
     ctx.shadowColor = 'white'
@@ -524,7 +534,7 @@ function drawScore() {
   ctx.fillStyle = 'white'
   ctx.font = `${(canvas.width + canvas.height) * 0.01}px Play`
   ctx.shadowColor = 'white'
-  ctx.shadowBlur = 4
+  ctx.shadowBlur = canvas.height * 0.005
   ctx.translate(canvas.width * 0.1, canvas.height * 0.1) // score is time in seconds alive
   ctx.fillText(seconds, 0, 0)
   ctx.restore()
