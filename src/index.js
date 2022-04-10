@@ -11,7 +11,7 @@ startButton.addEventListener('click', startGame)
 const gameSettings = {
   totalTime: 0,
 
-  maxRadialTurrets: 2, // maxTurret === currentTurret on game start
+  maxRadialTurrets: 2,
   currentRadialTurrets: 2,
   numRadialProjectiles: 10, // increase turret number/maxProjectile number with duration/score
 
@@ -283,7 +283,6 @@ class RadialTurret extends Turret {
       this.#fireWindmillRings,
       this.#fireFlowerRings,
       this.#fireSpiralRings,
-      // TODO more methods
     ]
   }
 
@@ -385,7 +384,7 @@ class AimedTurret extends Turret {
     this.fireAimedMethods = [
       this.#lineAttack,
       this.#coneAttack,
-      // TODO more methods
+      // this.#overTakeAttack
     ]
   }
 
@@ -426,6 +425,30 @@ class AimedTurret extends Turret {
         setTimeout(this.#fireConeRow.bind(this, maxCone-i, maxCone), i * 400)
       )
       while (this.delayedTimeoutIDs.length > maxCone) this.delayedTimeoutIDs.shift()
+    }
+  }
+
+  #overTakeWave(magnitude, globalOffset) {
+    const angleFromTurretToCursor = Math.atan2(cursorObject.y - this.y, cursorObject.x - this.x)
+    const innerOffset = 0.1 * Math.PI
+    const startAngle = angleFromTurretToCursor - innerOffset * 2
+    for (let i=0; i < 5; i++) {
+      const curAngle = startAngle + (innerOffset * i) + globalOffset
+      gameObjects.aimedProjectiles.push(
+        new AimedProjectile(
+          this.x,
+          this.y,
+          magnitude * Math.cos(curAngle),
+          magnitude * Math.sin(curAngle)
+        )
+      )
+    }
+  }
+
+  // Hard to dodge
+  #overTakeAttack() { // idea from: https://youtu.be/xbQ9e0zYuj4?t=221
+    for (let i=0; i < 20; i++) {
+      setTimeout(this.#overTakeWave.bind(this, 0.3 + (i+1) * 0.3, (i+1) * 0.02 * Math.PI), i * 100)
     }
   }
 
