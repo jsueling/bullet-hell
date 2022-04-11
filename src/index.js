@@ -384,54 +384,73 @@ class AimedTurret extends Turret {
     this.fireAimedMethods = [
       this.#lineAttack,
       this.#coneAttack,
-      // this.#overTakeAttack
+      this.#shotgunAttack,
+      // this.#overTakeAttack // hard attack, TODO => hardMode && this.#overTakeAttack? or push to fireAimedMethods array with hard mode active
     ]
-  }
-
-  #fireAimed() { // fires a projectile targeting the cursor
-    const dist = Math.sqrt((this.x - cursorObject.x)**2 + (this.y - cursorObject.y)**2)
-    const velX = (cursorObject.x - this.x) / dist // normalized vectors pointing from the turret to the cursor
-    const velY = (cursorObject.y - this.y) / dist
-    gameObjects.aimedProjectiles.push(new AimedProjectile(this.x, this.y, velX, velY))
   }
 
   #lineAttack() { // fires a line of projectiles aimed at the cursor
     const projectiles = gameSettings.numAimedProjectiles * 2
     for (let i=0; i < projectiles; i++) {
       this.delayedTimeoutIDs.push(
-        setTimeout(this.#fireAimed.bind(this), i * 400)
+        setTimeout(this.#fireAimed.bind(this), i * 200)
       )
       while (this.delayedTimeoutIDs.length > projectiles) this.delayedTimeoutIDs.shift()
     }
   }
 
-  #fireConeRow(rowLen) { // fires a single row centered targeting the cursor
-
-    // Math.atan2 https://math.stackexchange.com/a/2587852 https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/atan2
-    const angleFromTurretToCursor = Math.atan2(cursorObject.y - this.y, cursorObject.x - this.x)
-
-     // align each row (startAngle) so that it centers the target differing for odd/even row length
-    const startAngle = angleFromTurretToCursor - this.offSet * (rowLen % 2 == 0 ? rowLen * 0.5 - 0.5 : Math.floor(rowLen * 0.5))
-
-    for (let i=0; i < rowLen; i++) {
-      gameObjects.aimedProjectiles.push(new AimedProjectile(this.x, this.y, Math.cos(this.offSet * i + startAngle), Math.sin(this.offSet * i + startAngle)))
-    }
+  #fireAimed() { // fires a projectile targeting the cursor
+    const dist = Math.sqrt((this.x - cursorObject.x)**2 + (this.y - cursorObject.y)**2)
+    const velX = (cursorObject.x - this.x) / dist // normalized vectors pointing from the turret to the cursor
+    const velY = (cursorObject.y - this.y) / dist
+    const magnitude = 2
+    gameObjects.aimedProjectiles.push(new AimedProjectile(this.x, this.y, magnitude * velX, magnitude * velY))
   }
 
   #coneAttack() { // fires decreasing rows of projectiles at the cursor
     const maxCone = gameSettings.numAimedProjectiles
     for (let i=0; i < maxCone; i++) {
       this.delayedTimeoutIDs.push(
-        setTimeout(this.#fireConeRow.bind(this, maxCone-i, maxCone), i * 400)
+        setTimeout(this.#fireConeRow.bind(this, maxCone-i, maxCone), i * 200)
       )
       while (this.delayedTimeoutIDs.length > maxCone) this.delayedTimeoutIDs.shift()
+    }
+  }
+
+  #fireConeRow(rowLen) { // fires a single row centered targeting the cursor
+    // Math.atan2 https://en.wikipedia.org/wiki/Atan2
+    const angleFromTurretToCursor = Math.atan2(cursorObject.y - this.y, cursorObject.x - this.x)
+     // align each row (startAngle) so that it centers the target differing for odd/even row length
+    const startAngle = angleFromTurretToCursor - this.offSet * (rowLen % 2 == 0 ? rowLen * 0.5 - 0.5 : Math.floor(rowLen * 0.5))
+    const magnitude = 1.5
+
+    for (let i=0; i < rowLen; i++) {
+      gameObjects.aimedProjectiles.push(
+        new AimedProjectile(
+          this.x,
+          this.y,
+          magnitude * Math.cos(this.offSet * i + startAngle),
+          magnitude * Math.sin(this.offSet * i + startAngle)
+          )
+        )
+    }
+  }
+
+  // Fire consecutive waves at the player, each wave is faster than the last and the start of the wave is offSet more relative to the target => overtake or unfolding animation
+  #overTakeAttack() { // credits to: https://youtu.be/xbQ9e0zYuj4?t=221
+    const numWaves = 20
+    for (let i=0; i < numWaves; i++) {
+      this.delayedTimeoutIDs.push(
+        setTimeout(this.#overTakeWave.bind(this, 0.3 + (i+1) * 0.3, (i+1) * 0.02 * Math.PI), i * 100)
+      )
+      while (this.delayedTimeoutIDs.length > numWaves) this.delayedTimeoutIDs.shift()
     }
   }
 
   #overTakeWave(magnitude, globalOffset) {
     const angleFromTurretToCursor = Math.atan2(cursorObject.y - this.y, cursorObject.x - this.x)
     const innerOffset = 0.1 * Math.PI
-    const startAngle = angleFromTurretToCursor - innerOffset * 2
+    const startAngle = angleFromTurretToCursor - innerOffset * 2.5
     for (let i=0; i < 5; i++) {
       const curAngle = startAngle + (innerOffset * i) + globalOffset
       gameObjects.aimedProjectiles.push(
@@ -445,10 +464,30 @@ class AimedTurret extends Turret {
     }
   }
 
-  // Hard to dodge
-  #overTakeAttack() { // idea from: https://youtu.be/xbQ9e0zYuj4?t=221
-    for (let i=0; i < 20; i++) {
-      setTimeout(this.#overTakeWave.bind(this, 0.3 + (i+1) * 0.3, (i+1) * 0.02 * Math.PI), i * 100)
+  // Fires projectiles tightly but randomly spread towards the player
+  #shotgunAttack() {
+    const numWaves = 5
+    for (let i=0; i < numWaves; i++) {
+      this.delayedTimeoutIDs.push(
+        setTimeout(this.#shotgunWave.bind(this), i * 70)
+      )
+      while (this.delayedTimeoutIDs.length > numWaves) this.delayedTimeoutIDs.shift()
+    }
+  }
+
+  #shotgunWave () {
+    const angleFromTurretToCursor = Math.atan2(cursorObject.y - this.y, cursorObject.x - this.x)
+    const waveSize = 5
+    const magnitude = 1.5
+    for (let i=0; i < waveSize; i++) {
+      gameObjects.aimedProjectiles.push(
+        new AimedProjectile(
+          this.x,
+          this.y,
+          magnitude * Math.cos(angleFromTurretToCursor + (Math.random() - 0.5) * Math.PI * 0.0625),
+          magnitude * Math.sin(angleFromTurretToCursor + (Math.random() - 0.5) * Math.PI * 0.0625)
+        )
+      )
     }
   }
 
