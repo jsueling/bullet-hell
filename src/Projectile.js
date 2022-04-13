@@ -29,8 +29,28 @@ class Projectile {
 export class RadialProjectile extends Projectile {
   constructor(canvas, ctx, x, y, velX, velY) {
     super(canvas, ctx, x, y, velX, velY)
-    this.colour = 'violet'
+    this.colours = ['#f9d5e5', '#eeac99', '#e06377', '#c83349']
+    this.colourIndex = 0
+    this.frames = 0
     this.radius = canvas.height * 0.003
+  }
+
+  draw() {
+    if (this.colourIndex == this.colours.length) this.colourIndex = 0
+  
+    this.ctx.save()
+    this.ctx.shadowBlur = this.canvas.height * 0.01
+    this.ctx.shadowColor = this.colours[this.colourIndex]
+    this.ctx.translate(this.x, this.y)
+    this.ctx.fillStyle = this.colours[this.colourIndex]
+    this.ctx.beginPath()
+    this.ctx.arc(0, 0, this.radius, 0, 2 * Math.PI)
+    this.ctx.fill()
+    this.ctx.restore()
+
+    // every 20 calls to draw (frames), change this projectile's colour (colourIndex)
+    if (this.frames % 20 == 0) this.colourIndex += 1
+    this.frames += 1
   }
 }
 

@@ -247,7 +247,7 @@ export class AimedTurret extends Turret {
     const numWaves = 5
     for (let i=0; i < numWaves; i++) {
       this.delayedTimeoutIDs.push(
-        setTimeout(this.#shotgunWave.bind(this), i * 70)
+        setTimeout(this.#shotgunWave.bind(this), i * 100)
       )
       while (this.delayedTimeoutIDs.length > numWaves) this.delayedTimeoutIDs.shift()
     }

@@ -35,7 +35,7 @@ export const gameSettings = {
 // can cause a bug if we want to delay replacement unless we immediately add the new turrets
 // because the next frame will call more setTimeouts to replace lost turrets
 
-const gameObjects = {
+export const gameObjects = {
   radialTurrets: [],
   radialProjectiles: [],
   aimedTurrets: [],
@@ -391,8 +391,8 @@ function createTurret(num, idleTime, turretType) { // creates turrets after some
         }
       }, randomTimeOffset + idleTime)
     )
-    // limit timeoutID array length by max number of turrets that can be created at once
-    const maxCreated = turretType === 'aimed' ? gameSettings.maxAimedTurrets : gameSettings.maxRadialTurrets
-    while (timeoutIDs.createTurretTimeoutIDs.length > maxCreated) timeoutIDs.createTurretTimeoutIDs.shift()
+    // limit timeoutID array length by max number of turrets possibly pending for creation
+    const maxPending = gameSettings.maxAimedTurrets + gameSettings.maxRadialTurrets
+    while (timeoutIDs.createTurretTimeoutIDs.length > maxPending) timeoutIDs.createTurretTimeoutIDs.shift()
   }
 }

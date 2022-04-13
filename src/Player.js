@@ -1,11 +1,10 @@
 import { PlayerProjectile } from "./Projectile"
-import { gameTimers } from './index.js'
+import { gameTimers, gameObjects } from './index.js'
 
 export class Player {
-  constructor(canvas, ctx, gameObjects) {
+  constructor(canvas, ctx) {
     this.canvas = canvas
     this.ctx = ctx
-    this.gameObjects = gameObjects
     this.x = 0,
     this.y = 0,
     this.radius = 0,
@@ -25,7 +24,7 @@ export class Player {
   }
   fire() {
     if (!gameTimers.paused) {
-      this.gameObjects.playerProjectiles.push( // fires 2 shots upwards at L, R edge of the Player
+      gameObjects.playerProjectiles.push( // fires 2 shots upwards at L, R edge of the Player
         new PlayerProjectile(this.canvas, this.ctx, this.x - this.radius, this.y, 0, -3),
         new PlayerProjectile(this.canvas, this.ctx, this.x + this.radius, this.y, 0, -3),
       )
