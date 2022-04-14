@@ -57,9 +57,13 @@ export class RadialTurret extends Turret {
       this.#fireFlowerRings,
       this.#fireSpiralRings,
     ]
+    this.projectileColours = [
+      'red',
+      'mint'
+    ]
   }
 
-  #fireRadial() { // fires evenly spaced projectiles emitted from the centre of each turret
+  #fireRadial(projectileColour) { // fires evenly spaced projectiles emitted from the centre of each turret
     const radialProjectiles = gameSettings.numRadialProjectiles * 5
 
     const randomPartition = (Math.random() * Math.PI) + Math.PI // varies between Pi and 2Pi radians
@@ -72,62 +76,62 @@ export class RadialTurret extends Turret {
       if (angle > randomPartition * 0.95 && angle < randomPartition * 1.05) continue
 
       // assigns vectors that evenly distributes each radialProjectile around the unit circle
-      this.projectiles.push(new RadialProjectile(this.canvas, this.ctx, this.x, this.y, Math.cos(angle), Math.sin(-angle))) // correct for down increasing y
+      this.projectiles.push(new RadialProjectile(this.canvas, this.ctx, this.x, this.y, Math.cos(angle), Math.sin(-angle), projectileColour)) // correct for down increasing y
     }
   }
 
-  #spiralRing() { // single spiral ring accumulating offSet each time it is called
+  #spiralRing(projectileColour) { // single spiral ring accumulating offSet each time it is called
     const angle = this.offSet
-    this.projectiles.push(new RadialProjectile(this.canvas, this.ctx, this.x, this.y, Math.cos(angle), Math.sin(angle)))
+    this.projectiles.push(new RadialProjectile(this.canvas, this.ctx, this.x, this.y, Math.cos(angle), Math.sin(angle), projectileColour))
     this.offSet += Math.PI * 0.33
   }
   
-  #fireSpiralRings() { // fires rings in a spiral pattern
+  #fireSpiralRings(projectileColour) { // fires rings in a spiral pattern
     const numSpiralRings = gameSettings.numRadialProjectiles * 5 * (1 + Math.floor(Math.random() * 3))
     for (let i=0; i < numSpiralRings; i++) {
       this.delayedTimeoutIDs.push(
-        setTimeout(this.#spiralRing.bind(this), i * 10)
+        setTimeout(this.#spiralRing.bind(this, projectileColour), i * 10)
       )
     }
     while (this.delayedTimeoutIDs.length > numSpiralRings) this.delayedTimeoutIDs.shift()
   }
   
-  #flowerRing() { // single ring staggering lines equal and opposite of each other accumulating offset for each call
+  #flowerRing(projectileColour) { // single ring staggering lines equal and opposite of each other accumulating offset for each call
     const angle = this.offSet
-    this.projectiles.push(new RadialProjectile(this.canvas, this.ctx, this.x, this.y, Math.cos(angle), Math.sin(angle)))
-    this.projectiles.push(new RadialProjectile(this.canvas, this.ctx, this.x, this.y, Math.cos(-angle), Math.sin(-angle)))
+    this.projectiles.push(new RadialProjectile(this.canvas, this.ctx, this.x, this.y, Math.cos(angle), Math.sin(angle), projectileColour))
+    this.projectiles.push(new RadialProjectile(this.canvas, this.ctx, this.x, this.y, Math.cos(-angle), Math.sin(-angle), projectileColour))
     this.offSet += Math.PI * 0.22
   }
   
-  #fireFlowerRings() { // fires rings in a flower pattern
+  #fireFlowerRings(projectileColour) { // fires rings in a flower pattern
     const numFlowerRings = gameSettings.numRadialProjectiles * 2.5 * (1 + Math.floor(Math.random() * 3)) // 100 + 100 * Math.floor(Math.random() * 3)
     for (let i=0; i < numFlowerRings; i++) {
       this.delayedTimeoutIDs.push(
-        setTimeout(this.#flowerRing.bind(this), i * 20)
+        setTimeout(this.#flowerRing.bind(this, projectileColour), i * 20)
       )
     }
     while (this.delayedTimeoutIDs.length > numFlowerRings) this.delayedTimeoutIDs.shift()
   }
 
-  #windMillRing() { // single ring of straight line + staggered line
+  #windMillRing(projectileColour) { // single ring of straight line + staggered line
     for (let j=0; j < gameSettings.numRadialProjectiles; j++) { // these rings do not accumulate offset i.e. fires a straight line
       const slice = 2 * Math.PI / gameSettings.numRadialProjectiles;
       const angle = slice * j;
-      this.projectiles.push(new RadialProjectile(this.canvas, this.ctx, this.x, this.y, Math.cos(angle), Math.sin(angle)))
+      this.projectiles.push(new RadialProjectile(this.canvas, this.ctx, this.x, this.y, Math.cos(angle), Math.sin(angle), projectileColour))
     }
     for (let j=0; j < gameSettings.numRadialProjectiles; j++) { // these rings accumulate offset which staggers projectiles
       const slice = 2 * Math.PI / gameSettings.numRadialProjectiles;
       const angle = this.offSet + slice * j;
-      this.projectiles.push(new RadialProjectile(this.canvas, this.ctx, this.x, this.y, Math.cos(angle), Math.sin(angle)))
+      this.projectiles.push(new RadialProjectile(this.canvas, this.ctx, this.x, this.y, Math.cos(angle), Math.sin(angle), projectileColour))
     }
     this.offSet += Math.PI * 0.22 // accumulate offSet for each ring
   }
 
-  #fireWindmillRings() { // fires rings in a windmill pattern
+  #fireWindmillRings(projectileColour) { // fires rings in a windmill pattern
     const numWindmillRings = gameSettings.numRadialProjectiles * (0.5 + 0.5 * Math.floor(Math.random() * 3)) // * 0.5, * 1, * 1.5
     for (let i=0; i < numWindmillRings; i++) {
       this.delayedTimeoutIDs.push(
-        setTimeout(this.#windMillRing.bind(this), i * 120) // bind this context when setTimeout calls the method of this turret
+        setTimeout(this.#windMillRing.bind(this, projectileColour), i * 120) // bind this context when setTimeout calls the method of this turret
       )
       // FIFO only store the most recent delayedTimeoutIDs
       while (this.delayedTimeoutIDs.length > numWindmillRings) this.delayedTimeoutIDs.shift()
@@ -138,7 +142,8 @@ export class RadialTurret extends Turret {
   #fireRandomRadialAttack() {
     // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/random
     const fireMethodsIndex = Math.floor(Math.random() * this.fireRadialMethods.length) // Math.random() returns 0 to <1. Safe to floor the result and not get an out of bounds index
-    this.fireRadialMethods[fireMethodsIndex].bind(this)()
+    const randomProjectileColour = this.projectileColours[Math.floor(Math.random() * this.projectileColours.length)]
+    this.fireRadialMethods[fireMethodsIndex].call(this, randomProjectileColour)
   }
 
   debounceFire() { // debounce call for this turret to fire

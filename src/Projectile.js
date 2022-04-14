@@ -27,12 +27,19 @@ class Projectile {
 }
 
 export class RadialProjectile extends Projectile {
-  constructor(canvas, ctx, x, y, velX, velY) {
+  constructor(canvas, ctx, x, y, velX, velY, radialProjectileColour) {
     super(canvas, ctx, x, y, velX, velY)
-    this.colours = ['#f9d5e5', '#eeac99', '#e06377', '#c83349']
     this.colourIndex = 0
     this.frames = 0
     this.radius = canvas.height * 0.003
+    switch(radialProjectileColour) {
+      case 'red':
+        this.colours = ['#f9d5e5', '#eeac99', '#e06377', '#c83349']
+        break
+      case 'mint':
+        this.colours = ['#1FAB89', '#62D2A2', '#9DF3C4', '#D7FBE8']
+        break
+    }
   }
 
   draw() {
