@@ -30,7 +30,6 @@ class Turret {
     if (this.y > this.canvas.height + this.radius) { // OOB reset turret to top of screen
       this.x = Math.random() * this.canvas.width
       this.y = -this.radius
-      this.velY = this.randomYVelocity
     }
   }
 
@@ -48,8 +47,10 @@ export class RadialTurret extends Turret {
   constructor(canvas, ctx, projectiles) {
     super(canvas, ctx, projectiles)
     this.colour = 'red'
-    this.velY = this.canvas.height * (Math.random() * 0.00025 + 0.00025) // velocity varying between 0.025 to 0.05 % of canvas height
-    this.randomYVelocity = this.velY
+    let turretSpeed = this.canvas.height * (Math.random() * 0.00025 + 0.00025)
+    // if hardMode enabled, change turretSpeed 50% of the time
+    if (gameSettings.hardMode && Math.random() < 0.5) turretSpeed = this.canvas.height * (Math.random() * 0.005 + 0.005)
+    this.velY = turretSpeed
     this.offSet = 0
     this.fireRadialMethods = [ // store function references in array https://stackoverflow.com/a/9792043
       this.#fireRadial,
@@ -59,7 +60,8 @@ export class RadialTurret extends Turret {
     ]
     this.projectileColours = [
       'red',
-      'mint'
+      'darkPink',
+      'magenta'
     ]
   }
 
@@ -158,45 +160,54 @@ export class AimedTurret extends Turret {
     this.player = player
     this.colour = 'yellow'
     this.velY = canvas.height * (Math.random() * 0.0005 + 0.0005) // velocity varying between 0.05 to 0.1 % of canvas height
-    this.randomYVelocity = this.velY
-    this.offSet = Math.PI * 0.0625
+    this.offSet = Math.PI * 0.04
     this.fireAimedMethods = [
       this.#lineAttack,
       this.#coneAttack,
-      this.#shotgunAttack,
-      // this.#overTakeAttack // hard attack, TODO => hardMode && this.#overTakeAttack? or push to fireAimedMethods array with hard mode active
+      this.#shotgunAttack
     ]
+
+    // When hardMode is enabled newly created aimedTurrets have access to the overTakeAttack fire method
+    if (gameSettings.hardMode) {
+      this.fireAimedMethods.push(this.#overTakeAttack)
+    }
   }
 
-  #lineAttack() { // fires a line of projectiles aimed at the player
+  #lineAttack(projectileHue) { // fires a line of projectiles aimed at the player
+    let projectileLight = 45
     const projectiles = gameSettings.numAimedProjectiles * 2
     for (let i=0; i < projectiles; i++) {
       this.delayedTimeoutIDs.push(
-        setTimeout(this.#fireAimed.bind(this), i * 200)
+        setTimeout(this.#fireAimed.bind(this, `hsl(${projectileHue}, 100%, ${projectileLight}%)`), i * 200)
       )
+      projectileLight += 5
+      if (projectileLight > 100) projectileLight = 45
       while (this.delayedTimeoutIDs.length > projectiles) this.delayedTimeoutIDs.shift()
     }
   }
 
-  #fireAimed() { // fires a projectile targeting the player
+  #fireAimed(projectileColour) { // fires a projectile targeting the player
     const dist = Math.sqrt((this.x - this.player.x)**2 + (this.y - this.player.y)**2)
     const velX = (this.player.x - this.x) / dist // normalized vectors pointing from the turret to the player
     const velY = (this.player.y - this.y) / dist
     const magnitude = 2
-    this.projectiles.push(new AimedProjectile(this.canvas, this.ctx, this.x, this.y, magnitude * velX, magnitude * velY))
+    this.projectiles.push(new AimedProjectile(this.canvas, this.ctx, this.x, this.y, magnitude * velX, magnitude * velY, projectileColour))
   }
 
-  #coneAttack() { // fires decreasing rows of projectiles at the player
+  #coneAttack(projectileHue) { // fires decreasing rows of projectiles at the player
     const maxCone = gameSettings.numAimedProjectiles
+    let projectileLight = 45
     for (let i=0; i < maxCone; i++) {
       this.delayedTimeoutIDs.push(
-        setTimeout(this.#fireConeRow.bind(this, maxCone-i, maxCone), i * 200)
+        setTimeout(this.#fireConeRow.bind(this, maxCone-i, `hsl(${projectileHue}, 100%, ${projectileLight}%)`), i * 200)
       )
+      projectileLight += 10
+      if (projectileLight > 100) projectileLight = 45
       while (this.delayedTimeoutIDs.length > maxCone) this.delayedTimeoutIDs.shift()
     }
   }
 
-  #fireConeRow(rowLen) { // fires a single row centered targeting the player
+  #fireConeRow(rowLen, projectileColour) { // fires a single row centered targeting the player
     // Math.atan2 https://en.wikipedia.org/wiki/Atan2
     const angleFromTurretToPlayer = Math.atan2(this.player.y - this.y, this.player.x - this.x)
      // align each row (startAngle) so that it centers the target differing for odd/even row length
@@ -211,24 +222,36 @@ export class AimedTurret extends Turret {
           this.x,
           this.y,
           magnitude * Math.cos(this.offSet * i + startAngle),
-          magnitude * Math.sin(this.offSet * i + startAngle)
+          magnitude * Math.sin(this.offSet * i + startAngle),
+          projectileColour
         )
       )
     }
   }
 
   // Fire consecutive waves at the player, each wave is faster than the last and the start of the wave is offSet more relative to the target => overtake or unfolding animation
-  #overTakeAttack() { // credits to: https://youtu.be/xbQ9e0zYuj4?t=221
+  #overTakeAttack(projectileHue) { // credits to: https://youtu.be/xbQ9e0zYuj4?t=221
     const numWaves = 20
+    let projectileLight = 45
     for (let i=0; i < numWaves; i++) {
       this.delayedTimeoutIDs.push(
-        setTimeout(this.#overTakeWave.bind(this, 0.3 + (i+1) * 0.3, (i+1) * 0.02 * Math.PI), i * 100)
+        setTimeout(
+          this.#overTakeWave.bind(
+            this,
+            0.3 + (i+1) * 0.3,
+            (i+1) * 0.02 * Math.PI,
+            `hsl(${projectileHue}, 100%, ${projectileLight}%)`
+          ),
+          i * 100
+        )
       )
+      projectileLight += 3
+      if (projectileLight > 100) projectileLight = 45
       while (this.delayedTimeoutIDs.length > numWaves) this.delayedTimeoutIDs.shift()
     }
   }
 
-  #overTakeWave(magnitude, globalOffset) {
+  #overTakeWave(magnitude, globalOffset, projectileColour) {
     const angleFromTurretToPlayer = Math.atan2(this.player.y - this.y, this.player.x - this.x)
     const innerOffset = 0.1 * Math.PI
     const startAngle = angleFromTurretToPlayer - innerOffset * 2.5
@@ -241,24 +264,28 @@ export class AimedTurret extends Turret {
           this.x,
           this.y,
           magnitude * Math.cos(curAngle),
-          magnitude * Math.sin(curAngle)
+          magnitude * Math.sin(curAngle),
+          projectileColour
         )
       )
     }
   }
 
   // Fires projectiles tightly but randomly spread towards the player
-  #shotgunAttack() {
+  #shotgunAttack(projectileHue) {
     const numWaves = 5
+    let projectileLight = 45
     for (let i=0; i < numWaves; i++) {
       this.delayedTimeoutIDs.push(
-        setTimeout(this.#shotgunWave.bind(this), i * 100)
+        setTimeout(this.#shotgunWave.bind(this, `hsl(${projectileHue}, 100%, ${projectileLight}%)`), i * 100)
       )
+      projectileLight += 10
+      if (projectileLight > 100) projectileLight = 45
       while (this.delayedTimeoutIDs.length > numWaves) this.delayedTimeoutIDs.shift()
     }
   }
 
-  #shotgunWave () {
+  #shotgunWave(projectileColour) {
     const angleFromTurretToPlayer = Math.atan2(this.player.y - this.y, this.player.x - this.x)
     const waveSize = 5
     const magnitude = 1.5
@@ -270,7 +297,8 @@ export class AimedTurret extends Turret {
           this.x,
           this.y,
           magnitude * Math.cos(angleFromTurretToPlayer + (Math.random() - 0.5) * Math.PI * 0.0625),
-          magnitude * Math.sin(angleFromTurretToPlayer + (Math.random() - 0.5) * Math.PI * 0.0625)
+          magnitude * Math.sin(angleFromTurretToPlayer + (Math.random() - 0.5) * Math.PI * 0.0625),
+          projectileColour
         )
       )
     }
@@ -278,7 +306,8 @@ export class AimedTurret extends Turret {
 
   #fireRandomAimedAttack() { // fires a random attack from this.fireAimedMethods array
     const fireMethodsIndex = Math.floor(Math.random() * this.fireAimedMethods.length)
-    this.fireAimedMethods[fireMethodsIndex].bind(this)()
+    const projectileHue = Math.floor(Math.random() * 360)
+    this.fireAimedMethods[fireMethodsIndex].call(this, projectileHue)
   }
 
   debounceFire() { // debounces the calls to fire from gameLoop to this turret

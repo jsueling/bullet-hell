@@ -8,10 +8,10 @@ class Projectile {
     this.velY = velY * (canvas.height + canvas.width) * 0.0005
   }
 
+  // removed shadowBlur from projectiles because it kills performance
+
   draw() {
     this.ctx.save()
-    this.ctx.shadowBlur = this.canvas.height * 0.01
-    this.ctx.shadowColor = this.colour
     this.ctx.translate(this.x, this.y)
     this.ctx.fillStyle = this.colour
     this.ctx.beginPath()
@@ -34,10 +34,13 @@ export class RadialProjectile extends Projectile {
     this.radius = canvas.height * 0.003
     switch(radialProjectileColour) {
       case 'red':
-        this.colours = ['#f9d5e5', '#eeac99', '#e06377', '#c83349']
+        this.colours = ['hsl(0, 100%, 40%)', 'hsl(0, 100%, 50%)', 'hsl(0, 100%, 60%)', 'hsl(0, 100%, 70%)', 'hsl(0, 100%, 80%)'] // https://www.w3schools.com/colors/colors_hsl.asp
         break
-      case 'mint':
-        this.colours = ['#1FAB89', '#62D2A2', '#9DF3C4', '#D7FBE8']
+      case 'darkPink':
+        this.colours = ['hsl(340, 100%, 40%)', 'hsl(340, 100%, 50%)', 'hsl(340, 100%, 60%)', 'hsl(340, 100%, 70%)', 'hsl(340, 100%, 80%)']
+        break
+      case 'magenta':
+        this.colours = ['hsl(320, 100%, 40%)', 'hsl(320, 100%, 50%)', 'hsl(320, 100%, 60%)', 'hsl(320, 100%, 70%)', 'hsl(320, 100%, 80%)']
         break
     }
   }
@@ -46,8 +49,6 @@ export class RadialProjectile extends Projectile {
     if (this.colourIndex == this.colours.length) this.colourIndex = 0
   
     this.ctx.save()
-    this.ctx.shadowBlur = this.canvas.height * 0.01
-    this.ctx.shadowColor = this.colours[this.colourIndex]
     this.ctx.translate(this.x, this.y)
     this.ctx.fillStyle = this.colours[this.colourIndex]
     this.ctx.beginPath()
@@ -62,9 +63,9 @@ export class RadialProjectile extends Projectile {
 }
 
 export class AimedProjectile extends Projectile {
-  constructor(canvas, ctx, x, y, velX, velY) {
+  constructor(canvas, ctx, x, y, velX, velY, aimedProjectileColour) {
     super(canvas, ctx, x, y, velX, velY)
-    this.colour = 'orange'
+    this.colour = aimedProjectileColour
     this.radius = canvas.height * 0.003
   }
 }

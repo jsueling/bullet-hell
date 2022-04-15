@@ -16,6 +16,7 @@ export const gameSettings = {
   numAimedProjectiles: 5,
   numStars: 50,
   explosionDensity: 50,
+  hardMode: false, // TODO
   // fireInterval: 5000, // TODO
   reset() {
     this.totalTime = 0
@@ -213,7 +214,6 @@ function gameLoop(timeStamp) {
   // }
 
   drawScore()
-  player.draw()
 
   // Player projectiles
   for (let i=0; i < gameObjects.playerProjectiles.length; i++) {
@@ -228,7 +228,7 @@ function gameLoop(timeStamp) {
       i--
     }
 
-    // player projectiles colliding with turrets removes them
+    // player projectiles colliding with radialTurrets removes them
     for (let j=0; j < gameObjects.radialTurrets.length; j++) {
 
       const turret = gameObjects.radialTurrets[j]
@@ -248,6 +248,7 @@ function gameLoop(timeStamp) {
       }
     }
 
+    // player projectiles colliding with aimedTurrets
     for (let j=0; j < gameObjects.aimedTurrets.length; j++) {
 
       const turret = gameObjects.aimedTurrets[j]
@@ -263,6 +264,8 @@ function gameLoop(timeStamp) {
       }
     }
   }
+
+  player.draw()
 
   // particles for destroyed turret explosion animation
   for (let i=0; i < gameObjects.explosionParticles.length; i++) {
