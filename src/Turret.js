@@ -173,15 +173,15 @@ export class AimedTurret extends Turret {
     }
   }
 
-  #lineAttack(projectileHue) { // fires a line of projectiles aimed at the player
-    let projectileLight = 45
+  #lineAttack(projectileHue, minProjectileLight, maxProjectileLight) { // fires a line of projectiles aimed at the player
+    let projectileLight = minProjectileLight
     const projectiles = gameSettings.numAimedProjectiles * 2
     for (let i=0; i < projectiles; i++) {
       this.delayedTimeoutIDs.push(
         setTimeout(this.#fireAimed.bind(this, `hsl(${projectileHue}, 100%, ${projectileLight}%)`), i * 200)
       )
-      projectileLight += 5
-      if (projectileLight > 100) projectileLight = 45
+      projectileLight += 2
+      if (projectileLight > maxProjectileLight) projectileLight = minProjectileLight
       while (this.delayedTimeoutIDs.length > projectiles) this.delayedTimeoutIDs.shift()
     }
   }
@@ -194,15 +194,15 @@ export class AimedTurret extends Turret {
     this.projectiles.push(new AimedProjectile(this.canvas, this.ctx, this.x, this.y, magnitude * velX, magnitude * velY, projectileColour))
   }
 
-  #coneAttack(projectileHue) { // fires decreasing rows of projectiles at the player
+  #coneAttack(projectileHue, minProjectileLight, maxProjectileLight) { // fires decreasing rows of projectiles at the player
     const maxCone = gameSettings.numAimedProjectiles
-    let projectileLight = 45
+    let projectileLight = minProjectileLight
     for (let i=0; i < maxCone; i++) {
       this.delayedTimeoutIDs.push(
         setTimeout(this.#fireConeRow.bind(this, maxCone-i, `hsl(${projectileHue}, 100%, ${projectileLight}%)`), i * 200)
       )
-      projectileLight += 10
-      if (projectileLight > 100) projectileLight = 45
+      projectileLight += 5
+      if (projectileLight > maxProjectileLight) projectileLight = minProjectileLight
       while (this.delayedTimeoutIDs.length > maxCone) this.delayedTimeoutIDs.shift()
     }
   }
@@ -230,9 +230,9 @@ export class AimedTurret extends Turret {
   }
 
   // Fire consecutive waves at the player, each wave is faster than the last and the start of the wave is offSet more relative to the target => overtake or unfolding animation
-  #overTakeAttack(projectileHue) { // credits to: https://youtu.be/xbQ9e0zYuj4?t=221
+  #overTakeAttack(projectileHue, minProjectileLight, maxProjectileLight) { // credits to: https://youtu.be/xbQ9e0zYuj4?t=221
     const numWaves = 20
-    let projectileLight = 45
+    let projectileLight = minProjectileLight
     for (let i=0; i < numWaves; i++) {
       this.delayedTimeoutIDs.push(
         setTimeout(
@@ -245,8 +245,8 @@ export class AimedTurret extends Turret {
           i * 100
         )
       )
-      projectileLight += 3
-      if (projectileLight > 100) projectileLight = 45
+      projectileLight += 1
+      if (projectileLight > maxProjectileLight) projectileLight = minProjectileLight
       while (this.delayedTimeoutIDs.length > numWaves) this.delayedTimeoutIDs.shift()
     }
   }
@@ -272,15 +272,15 @@ export class AimedTurret extends Turret {
   }
 
   // Fires projectiles tightly but randomly spread towards the player
-  #shotgunAttack(projectileHue) {
+  #shotgunAttack(projectileHue, minProjectileLight, maxProjectileLight) {
     const numWaves = 5
-    let projectileLight = 45
+    let projectileLight = minProjectileLight
     for (let i=0; i < numWaves; i++) {
       this.delayedTimeoutIDs.push(
         setTimeout(this.#shotgunWave.bind(this, `hsl(${projectileHue}, 100%, ${projectileLight}%)`), i * 100)
       )
-      projectileLight += 10
-      if (projectileLight > 100) projectileLight = 45
+      projectileLight += 5
+      if (projectileLight > maxProjectileLight) projectileLight = minProjectileLight
       while (this.delayedTimeoutIDs.length > numWaves) this.delayedTimeoutIDs.shift()
     }
   }
@@ -306,8 +306,10 @@ export class AimedTurret extends Turret {
 
   #fireRandomAimedAttack() { // fires a random attack from this.fireAimedMethods array
     const fireMethodsIndex = Math.floor(Math.random() * this.fireAimedMethods.length)
-    const projectileHue = Math.floor(Math.random() * 360)
-    this.fireAimedMethods[fireMethodsIndex].call(this, projectileHue)
+    const projectileHue = 200 + Math.floor(Math.random() * 50) // blue hue
+    const minProjectileLight = 55
+    const maxProjectileLight = 90
+    this.fireAimedMethods[fireMethodsIndex].call(this, projectileHue, minProjectileLight, maxProjectileLight)
   }
 
   debounceFire() { // debounces the calls to fire from gameLoop to this turret
