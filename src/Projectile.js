@@ -34,13 +34,13 @@ export class RadialProjectile extends Projectile {
     this.radius = canvas.height * 0.003
     switch(radialProjectileColour) {
       case 'red':
-        this.colours = ['hsl(0, 100%, 40%)', 'hsl(0, 100%, 50%)', 'hsl(0, 100%, 60%)', 'hsl(0, 100%, 70%)', 'hsl(0, 100%, 80%)'] // https://www.w3schools.com/colors/colors_hsl.asp
+        this.colours = ['hsl(0, 100%, 70%)', 'hsl(0, 100%, 75%)', 'hsl(0, 100%, 80%)', 'hsl(0, 100%, 85%)', 'hsl(0, 100%, 90%)'] // https://www.w3schools.com/colors/colors_hsl.asp
         break
       case 'darkPink':
-        this.colours = ['hsl(340, 100%, 40%)', 'hsl(340, 100%, 50%)', 'hsl(340, 100%, 60%)', 'hsl(340, 100%, 70%)', 'hsl(340, 100%, 80%)']
+        this.colours = ['hsl(350, 100%, 70%)', 'hsl(350, 100%, 75%)', 'hsl(350, 100%, 80%)', 'hsl(350, 100%, 85%)', 'hsl(350, 100%, 90%)']
         break
       case 'magenta':
-        this.colours = ['hsl(320, 100%, 40%)', 'hsl(320, 100%, 50%)', 'hsl(320, 100%, 60%)', 'hsl(320, 100%, 70%)', 'hsl(320, 100%, 80%)']
+        this.colours = ['hsl(355, 100%, 70%)', 'hsl(355, 100%, 75%)', 'hsl(355, 100%, 80%)', 'hsl(355, 100%, 85%)', 'hsl(355, 100%, 90%)']
         break
     }
   }
@@ -71,9 +71,9 @@ export class AimedProjectile extends Projectile {
 }
 
 export class PlayerProjectile extends Projectile {
-  constructor(canvas, ctx, x, y, velX, velY) {
+  constructor(canvas, ctx, x, y, velX, velY, projectileColour) {
     super(canvas, ctx, x, y, velX, velY)
-    this.colour = 'magenta'
+    this.colour = projectileColour
     this.radius = canvas.height * 0.002
   }
 }

@@ -158,7 +158,7 @@ export class AimedTurret extends Turret {
   constructor(canvas, ctx, projectiles, player) {
     super(canvas, ctx, projectiles)
     this.player = player
-    this.colour = 'yellow'
+    this.colour = 'green'
     this.velY = canvas.height * (Math.random() * 0.0005 + 0.0005) // velocity varying between 0.05 to 0.1 % of canvas height
     this.offSet = Math.PI * 0.04
     this.fireAimedMethods = [
@@ -306,9 +306,9 @@ export class AimedTurret extends Turret {
 
   #fireRandomAimedAttack() { // fires a random attack from this.fireAimedMethods array
     const fireMethodsIndex = Math.floor(Math.random() * this.fireAimedMethods.length)
-    const projectileHue = 200 + Math.floor(Math.random() * 50) // blue hue
-    const minProjectileLight = 55
-    const maxProjectileLight = 90
+    const projectileHue = 140 + Math.floor(Math.random() * 21)
+    const minProjectileLight = 70
+    const maxProjectileLight = 95
     this.fireAimedMethods[fireMethodsIndex].call(this, projectileHue, minProjectileLight, maxProjectileLight)
   }
 
