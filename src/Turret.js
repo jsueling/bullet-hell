@@ -307,8 +307,8 @@ export class AimedTurret extends Turret {
   #fireRandomAimedAttack() { // fires a random attack from this.fireAimedMethods array
     const fireMethodsIndex = Math.floor(Math.random() * this.fireAimedMethods.length)
     const projectileHue = 140 + Math.floor(Math.random() * 21)
-    const minProjectileLight = 70
-    const maxProjectileLight = 95
+    const minProjectileLight = 60
+    const maxProjectileLight = 90
     this.fireAimedMethods[fireMethodsIndex].call(this, projectileHue, minProjectileLight, maxProjectileLight)
   }
 

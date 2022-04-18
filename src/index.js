@@ -8,24 +8,26 @@ import { Player } from './Player'
 
 export const gameSettings = {
   totalTime: 0,
-  maxRadialTurrets: 2,
-  currentRadialTurrets: 2,
-  numRadialProjectiles: 10, // increase turret number/maxProjectile number with duration/score
-  maxAimedTurrets: 2,
-  currentAimedTurrets: 2,
-  numAimedProjectiles: 5,
+  currentRadialTurrets: 1,
+  currentAimedTurrets: 1,
+  numRadialProjectiles: 1,
+  numAimedProjectiles: 1,
+  maxRadialTurrets: 1,
+  maxAimedTurrets: 1,
   numStars: 50,
   explosionDensity: 50,
-  hardMode: false, // TODO
-  // fireInterval: 5000, // TODO
+  hardMode: false,
+  difficultyCounter: 0,
   reset() {
     this.totalTime = 0
-    this.maxRadialTurrets = 2
-    this.currentRadialTurrets = 2
-    this.numRadialProjectiles = 5
-    this.maxAimedTurrets = 2
-    this.currentAimedTurrets = 2
-    this.numAimedProjectiles = 5
+    this.currentRadialTurrets = 1
+    this.currentAimedTurrets = 1
+    this.numRadialProjectiles = 1
+    this.numAimedProjectiles = 1
+    this.maxRadialTurrets = 1
+    this.maxAimedTurrets = 1
+    this.difficultyCounter = 0
+    this.hardMode = false
   }
 }
 
@@ -68,13 +70,15 @@ export const gameTimers = {
 }
 
 const timeoutIDs = {
-  gameLoopID: undefined,
-  resizeTimeoutID: undefined,
-  createTurretTimeoutIDs: [],
+  gameLoop: undefined, // request id from requestAnimationFrame
+  resize: undefined,
+  increaseDifficulty: undefined,
+  createTurrets: [],
   reset() {
-    this.createTurretTimeoutIDs.forEach((id) => {
+    this.createTurrets.forEach((id) => {
       clearTimeout(id)
     })
+    clearTimeout(this.increaseDifficulty)
   }
 }
 
@@ -89,8 +93,8 @@ window.onload = init
 window.onresize = function() {
   // Debounce resize event. Then end the current gameLoop,
   // reset the game settings for the next gameLoop and call init
-  clearTimeout(timeoutIDs.resizeTimeoutID)
-  timeoutIDs.resizeTimeoutID = setTimeout(function() {
+  clearTimeout(timeoutIDs.resize)
+  timeoutIDs.resize = setTimeout(function() {
     endGame()
     resetGame()
     init()
@@ -150,8 +154,8 @@ function startGame() {
   player.startFireInterval()
 
   // initialize turrets
-  createTurret(gameSettings.maxRadialTurrets, 2000, 'radial') // spawns within 2-3 seconds of being called
-  createTurret(gameSettings.maxAimedTurrets, 2000, 'aimed')
+  createTurret(gameSettings.maxRadialTurrets, 6000, 'radial')
+  createTurret(gameSettings.maxAimedTurrets, 3000, 'aimed')
 
   // https://developer.mozilla.org/en-US/docs/Web/API/window/requestAnimationFrame#parameters
   // performance.now() returns DOMHighResTimeStamp which is the same format as the timeStamp
@@ -164,7 +168,7 @@ function startGame() {
 }
 
 function endGame() {
-  cancelAnimationFrame(timeoutIDs.gameLoopID)
+  cancelAnimationFrame(timeoutIDs.gameLoop)
   ctx.clearRect(0, 0, canvas.width, canvas.height)
 }
 
@@ -209,9 +213,9 @@ function gameLoop(timeStamp) {
     gameSettings.totalTime += gameTimers.elapsedMs
   }
 
-  // if (gameSettings.totalTime % 10000 < 50) { // increase difficulty every 10s
-  //   increaseDifficulty()
-  // }
+  if (gameSettings.totalTime > 6000 && gameSettings.totalTime % 5000 < 20) {
+    debounceIncreaseDifficulty()
+  }
 
   drawScore()
 
@@ -366,7 +370,7 @@ function gameLoop(timeStamp) {
     }
   }
 
-  timeoutIDs.gameLoopID = window.requestAnimationFrame(gameLoop)
+  timeoutIDs.gameLoop = window.requestAnimationFrame(gameLoop)
 }
 
 function circleCollides (A, B) { // returns boolean based on whether circle objects A and B collide
@@ -382,7 +386,7 @@ function createTurret(num, idleTime, turretType) { // creates turrets after some
   for (let i=0; i < num; i++) {
     // random time offset from 0 to 50% of initial idleTime
     const randomTimeOffset = Math.floor((idleTime * 0.5) * Math.random())
-    timeoutIDs.createTurretTimeoutIDs.push(
+    timeoutIDs.createTurrets.push(
       setTimeout(() => {
         switch (turretType) {
           case 'aimed':
@@ -396,6 +400,36 @@ function createTurret(num, idleTime, turretType) { // creates turrets after some
     )
     // limit timeoutID array length by max number of turrets possibly pending for creation
     const maxPending = gameSettings.maxAimedTurrets + gameSettings.maxRadialTurrets
-    while (timeoutIDs.createTurretTimeoutIDs.length > maxPending) timeoutIDs.createTurretTimeoutIDs.shift()
+    while (timeoutIDs.createTurrets.length > maxPending) timeoutIDs.createTurrets.shift()
+  }
+}
+
+function debounceIncreaseDifficulty() {
+  clearTimeout(timeoutIDs.increaseDifficulty)
+  timeoutIDs.increaseDifficulty = setTimeout(increaseDifficulty, 20)
+}
+
+// currently called every 5s starting from 10s totalTime
+function increaseDifficulty() {
+  gameSettings.difficultyCounter += 1 // increment first to prevent immediate increase to turrets and projectileCount
+
+  // hardMode starts at 15s
+  if (gameSettings.difficultyCounter === 10) { // set hardMode after X amount of calls to increaseDifficulty
+    console.log('hardmode');
+    gameSettings.hardMode = true
+  }
+
+  // 60, 160, 260, 360
+  if (gameSettings.difficultyCounter % 11 === 0) {
+    console.log('increased maxTurrets');
+    gameSettings.maxAimedTurrets += 1
+    gameSettings.maxRadialTurrets += 1
+  }
+
+  // 30, 55, 80, 105, 130
+  if (gameSettings.difficultyCounter % 5 === 0) {
+    console.log('increased projectileCount');
+    gameSettings.numAimedProjectiles += 1
+    gameSettings.numRadialProjectiles += 1
   }
 }

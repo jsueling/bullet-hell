@@ -24,7 +24,7 @@ export class Player {
   }
   fire() {
     if (!gameTimers.paused) {
-      const projectileColour = 'hsl(180, 100%, 80%)'
+      const projectileColour = 'hsl(180, 100%, 70%)'
       gameObjects.playerProjectiles.push( // fires 2 shots upwards at L, R edge of the Player
         new PlayerProjectile(this.canvas, this.ctx, this.x - this.radius, this.y, 0, -3, projectileColour),
         new PlayerProjectile(this.canvas, this.ctx, this.x + this.radius, this.y, 0, -3, projectileColour),
