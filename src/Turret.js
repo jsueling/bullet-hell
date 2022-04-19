@@ -231,7 +231,7 @@ export class AimedTurret extends Turret {
 
   // Fire consecutive waves at the player, each wave is faster than the last and the start of the wave is offSet more relative to the target => overtake or unfolding animation
   #overTakeAttack(projectileHue, minProjectileLight, maxProjectileLight) { // credits to: https://youtu.be/xbQ9e0zYuj4?t=221
-    const numWaves = 20
+    const numWaves = gameSettings.numAimedProjectiles
     let projectileLight = minProjectileLight
     for (let i=0; i < numWaves; i++) {
       this.delayedTimeoutIDs.push(
@@ -273,7 +273,7 @@ export class AimedTurret extends Turret {
 
   // Fires projectiles tightly but randomly spread towards the player
   #shotgunAttack(projectileHue, minProjectileLight, maxProjectileLight) {
-    const numWaves = 5
+    const numWaves = gameSettings.numAimedProjectiles
     let projectileLight = minProjectileLight
     for (let i=0; i < numWaves; i++) {
       this.delayedTimeoutIDs.push(
@@ -287,7 +287,7 @@ export class AimedTurret extends Turret {
 
   #shotgunWave(projectileColour) {
     const angleFromTurretToPlayer = Math.atan2(this.player.y - this.y, this.player.x - this.x)
-    const waveSize = 5
+    const waveSize = gameSettings.numAimedProjectiles
     const magnitude = 1.5
     for (let i=0; i < waveSize; i++) {
       this.projectiles.push(

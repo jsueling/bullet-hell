@@ -10,8 +10,8 @@ export const gameSettings = {
   totalTime: 0,
   currentRadialTurrets: 1,
   currentAimedTurrets: 1,
-  numRadialProjectiles: 1,
-  numAimedProjectiles: 1,
+  numRadialProjectiles: 5,
+  numAimedProjectiles: 5,
   maxRadialTurrets: 1,
   maxAimedTurrets: 1,
   numStars: 50,
@@ -22,8 +22,8 @@ export const gameSettings = {
     this.totalTime = 0
     this.currentRadialTurrets = 1
     this.currentAimedTurrets = 1
-    this.numRadialProjectiles = 1
-    this.numAimedProjectiles = 1
+    this.numRadialProjectiles = 5
+    this.numAimedProjectiles = 5
     this.maxRadialTurrets = 1
     this.maxAimedTurrets = 1
     this.difficultyCounter = 0
