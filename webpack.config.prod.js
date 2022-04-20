@@ -8,8 +8,9 @@ module.exports = {
   mode: 'production',
   entry: './src/index.js',
   output: {
-   filename: 'main.js',
+    filename: 'main.js',
     path: path.resolve(__dirname, 'dist'),
+    clean: true
   },
   module: {
     rules: [
@@ -25,5 +26,12 @@ module.exports = {
       new CssMinimizerPlugin()
     ],
   },
-  plugins: [new HtmlWebpackPlugin(), new MiniCssExtractPlugin()]
+  plugins: [
+    new HtmlWebpackPlugin({
+      template: './public/index.html',
+      // favicon: 'assets/favicon.ico',
+      // title: TODO
+    }),
+    new MiniCssExtractPlugin()
+  ]
 };
