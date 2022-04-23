@@ -82,13 +82,21 @@ const timeoutIDs = {
   }
 }
 
+const highScore = {
+  maxScores: 10,
+  scores: undefined
+}
+
 const canvas = document.getElementById('gameCanvas')
 const ctx = canvas.getContext('2d')
 const menuScreen = document.getElementById('menuScreen')
 const startButton = document.getElementById('startButton')
 const player = new Player(canvas, ctx, gameObjects) // initialize player
 
-window.onload = init
+window.onload = function() {
+  getScores()
+  init()
+}
 
 window.onresize = function() {
   // Debounce resize event. Then end the current gameLoop,
@@ -96,7 +104,6 @@ window.onresize = function() {
   clearTimeout(timeoutIDs.resize)
   timeoutIDs.resize = setTimeout(function() {
     endGame()
-    resetGame()
     init()
   }, 100)
 }
@@ -115,7 +122,11 @@ window.onmousemove = function(e) {
   player.y = e.y
 }
 
-startButton.onclick = startGame
+// Once when opening the game, get and save scores from localStorage if they exist else the empty array
+function getScores() {
+  const highScoreString = localStorage.getItem('bulletHellHighScores')
+  highScore.scores = JSON.parse(highScoreString) ?? []
+}
 
 function init() {
   // responsive width and height
@@ -142,6 +153,8 @@ function startMenu() {
     star.draw()
   })
 }
+
+startButton.onclick = startGame
 
 function startGame() {
   // remove button + menuScreen as game starts
@@ -170,6 +183,16 @@ function startGame() {
 function endGame() {
   cancelAnimationFrame(timeoutIDs.gameLoop)
   ctx.clearRect(0, 0, canvas.width, canvas.height)
+
+  const finalScore = Math.round(gameSettings.totalTime/1000)
+  if (finalScore > (highScore.scores[highScore.scores.length -1] || 0)) { // if beat lowest stored score (or 0 if no scores)
+    highScore.scores.push(finalScore)
+    highScore.scores.sort((a, b) => b - a) // sort
+    highScore.scores.splice(highScore.maxScores) // restrict maxLength
+    localStorage.setItem('bulletHellHighScores', JSON.stringify(highScore.scores)) // save
+  }
+
+  resetGame()
 }
 
 function resetGame() {
@@ -334,7 +357,6 @@ function gameLoop(timeStamp) {
     prj.update()
     if (circleCollides(player, prj)) { // check collision for each radialProjectile with Player object
       endGame()
-      resetGame()
       startMenu()
       return
     }
@@ -358,7 +380,6 @@ function gameLoop(timeStamp) {
     prj.update()
     if (circleCollides(player, prj)) { // check collision for each aimedProjectile with Player object
       endGame()
-      resetGame()
       startMenu()
       return
     }

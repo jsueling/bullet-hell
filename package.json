@@ -1,13 +1,12 @@
 {
-  "name": "canvas-webpack",
+  "name": "bullet-hell",
   "version": "1.0.0",
   "description": "",
   "main": "src/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "webpack --config webpack.config.prod.js",
-    "dev": "NODE_ENV=development webpack serve --open --config webpack.config.dev.js",
-    "start": "NODE_ENV=production node ./src/app.js --open"
+    "start": "webpack serve --open --config webpack.config.dev.js"
   },
   "keywords": [],
   "author": "",
