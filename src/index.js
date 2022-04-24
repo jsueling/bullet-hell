@@ -84,7 +84,7 @@ const timeoutIDs = {
 
 const highScore = {
   maxScores: 10,
-  scores: undefined
+  scores: []
 }
 
 const canvas = document.getElementById('gameCanvas')
@@ -92,6 +92,7 @@ const ctx = canvas.getContext('2d')
 const menuScreen = document.getElementById('menuScreen')
 const startButton = document.getElementById('startButton')
 const player = new Player(canvas, ctx, gameObjects) // initialize player
+const highScoreListElement = document.getElementById('highScoreList')
 
 window.onload = function() {
   getScores()
@@ -133,19 +134,22 @@ function init() {
   canvas.width = window.innerWidth
   canvas.height = window.innerHeight
 
-  player.resize() // resize player
+  player.resize() // responsive player
 
   startMenu()
 }
 
 function startMenu() {
-  // show button and menu
-  startButton.style.display = 'block'
+  // show menuScreen
   menuScreen.style.display = 'block'
 
   // initialize all stars
   for (let i=0; i < gameSettings.numStars; i++) {
     gameObjects.stars.push(new Star(canvas, ctx))
+  }
+
+  if (highScore.scores.length) {
+    highScoreListElement.innerHTML = highScore.scores.map((score) =>  `<li>${score}</li>`).join("")
   }
 
   // draw the first frame of stars animation
@@ -157,8 +161,7 @@ function startMenu() {
 startButton.onclick = startGame
 
 function startGame() {
-  // remove button + menuScreen as game starts
-  startButton.style.display = 'none'
+  // hide menuScreen as game starts
   menuScreen.style.display = 'none'
 
   // initialize Player position and fireInterval

@@ -18,6 +18,33 @@
   left: 0;
 }
 
+#mainTitle {
+  position: absolute;
+  color: white;
+  font-size: 5vw;
+  top: 15%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+#highScoreTitle {
+  position: absolute;
+  color: white;
+  font-size: 2vw;
+  top: 25%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+#highScoreList {
+  position: absolute;
+  color: white;
+  font-size: 1.5vw;
+  top: 35%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
 #startButton {
   cursor: pointer;
   position: absolute;
