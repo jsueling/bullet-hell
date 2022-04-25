@@ -160,13 +160,13 @@ function startMenu() {
 
 startButton.onclick = startGame
 
-function startGame() {
+function startGame(e) {
   // hide menuScreen as game starts
   menuScreen.style.display = 'none'
 
-  // initialize Player position and fireInterval
-  player.x = canvas.width/2
-  player.y = canvas.height/2
+  // initialize Player fireInterval and position from click event 
+  player.x = e.x
+  player.y = e.y
   player.startFireInterval()
 
   // initialize turrets

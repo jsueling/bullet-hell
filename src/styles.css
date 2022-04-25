@@ -1,5 +1,9 @@
 @import url('https://fonts.googleapis.com/css2?family=Play:wght@700&display=swap');
 
+* {
+  font-family: 'Play', sans-serif;
+}
+
 #gameCanvas {
   cursor: none;
   position: absolute;
@@ -12,47 +16,42 @@
 
 #menuScreen {
   position: absolute;
+  text-align: center;
+  overflow: auto;
   width: 100%;
   height: 100%;
   top: 0;
   left: 0;
 }
 
-#mainTitle {
+#menu {
   position: absolute;
-  color: white;
-  font-size: 5vw;
-  top: 15%;
+  padding: 2%;
+  top: 50%;
   left: 50%;
+  color: white;
+  border: 0.1vw solid white;
+  border-radius: 2%;
+  filter: drop-shadow(0 0 0.1vw white);
   transform: translate(-50%, -50%);
+}
+
+#mainTitle {
+  font-size: 5vw;
 }
 
 #highScoreTitle {
-  position: absolute;
-  color: white;
   font-size: 2vw;
-  top: 25%;
-  left: 50%;
-  transform: translate(-50%, -50%);
 }
 
 #highScoreList {
-  position: absolute;
-  color: white;
+  list-style-position: inside;
   font-size: 1.5vw;
-  top: 35%;
-  left: 50%;
-  transform: translate(-50%, -50%);
 }
 
 #startButton {
   cursor: pointer;
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
   font-size: 2vw;
-  font-family: 'Play', sans-serif;
   padding: 0.5vw;
   border-radius: 5%;
   background: black;
