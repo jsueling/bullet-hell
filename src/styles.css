@@ -16,7 +16,6 @@
 
 #menuScreen {
   position: absolute;
-  text-align: center;
   overflow: auto;
   width: 100%;
   height: 100%;
@@ -26,40 +25,63 @@
 
 #menu {
   position: absolute;
+  display: flex;
+  flex-direction: column;
   padding: 2%;
   top: 50%;
   left: 50%;
   color: white;
   border: 0.1vw solid white;
-  border-radius: 2%;
-  filter: drop-shadow(0 0 0.1vw white);
   transform: translate(-50%, -50%);
 }
 
 #mainTitle {
   font-size: 5vw;
+  margin: 0;
+  padding-bottom: 2%;
+  filter: drop-shadow(0 0 0.1vw white);
 }
 
 #highScoreTitle {
-  font-size: 2vw;
+  font-size: 1.5vw;
+  margin: 0;
+  padding-bottom: 2%;
+  filter: drop-shadow(0 0 0.1vw white);
 }
 
 #highScoreList {
-  list-style-position: inside;
-  font-size: 1.5vw;
+  font-size: 1vw;
+  filter: drop-shadow(0 0 0.1vw white);
+  margin: 0;
+  padding-bottom: 4%;
 }
 
-#startButton {
+.menuButton {
   cursor: pointer;
   font-size: 2vw;
-  padding: 0.5vw;
-  border-radius: 5%;
   background: black;
+  filter: drop-shadow(0 0 0.1vw white);
   color: white;
 }
 
-#startButton:hover {
-  filter: drop-shadow(0 0 0.3vw white);
+.menuButton:hover {
+  filter: drop-shadow(0 0 0.5vw white);
   background: white;
   color: black;
+}
+
+#menuButtons {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+}
+
+#infoButton {
+  margin-bottom: 4%;
+}
+
+#highScores {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
 }

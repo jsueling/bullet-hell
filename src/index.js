@@ -149,7 +149,7 @@ function startMenu() {
   }
 
   if (highScore.scores.length) {
-    highScoreListElement.innerHTML = highScore.scores.map((score) =>  `<li>${score}</li>`).join("")
+    highScoreListElement.innerHTML = highScore.scores.map((score) =>  `<li>TEST ${score}</li>`).join("")
   }
 
   // draw the first frame of stars animation
