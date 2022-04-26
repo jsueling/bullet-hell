@@ -92,6 +92,7 @@ const ctx = canvas.getContext('2d')
 const menuScreen = document.getElementById('menuScreen')
 const startButton = document.getElementById('startButton')
 const player = new Player(canvas, ctx, gameObjects) // initialize player
+const highScores = document.getElementById('highScores')
 const highScoreListElement = document.getElementById('highScoreList')
 
 window.onload = function() {
@@ -149,6 +150,7 @@ function startMenu() {
   }
 
   if (highScore.scores.length) {
+    highScores.style.display = 'flex' // show and update highScores if they exist
     highScoreListElement.innerHTML = highScore.scores.map((score) =>  `<li>TEST ${score}</li>`).join("")
   }
 

@@ -52,8 +52,7 @@
 #highScoreList {
   font-size: 1vw;
   filter: drop-shadow(0 0 0.1vw white);
-  margin: 0;
-  padding-bottom: 4%;
+  padding: 0;
 }
 
 .menuButton {
@@ -77,11 +76,12 @@
 }
 
 #infoButton {
+  margin-top: 6%;
   margin-bottom: 4%;
 }
 
 #highScores {
-  display: flex;
+  display: none;
   align-items: center;
   flex-direction: column;
 }
