@@ -36,16 +36,15 @@
 }
 
 #mainTitle {
+  text-align: center;
   font-size: 5vw;
   margin: 0;
-  padding-bottom: 2%;
   filter: drop-shadow(0 0 0.1vw white);
 }
 
 #highScoreTitle {
   font-size: 1.5vw;
   margin: 0;
-  padding-bottom: 2%;
   filter: drop-shadow(0 0 0.1vw white);
 }
 
@@ -77,14 +76,19 @@
 }
 
 #infoButton {
-  margin-top: 6%;
   margin-bottom: 4%;
 }
 
 #highScoreDiv {
   display: none;
+  padding: 5%;
   align-items: center;
   flex-direction: column;
+}
+
+#infoText {
+  padding: 5%;
+  text-align: center;
 }
 
 #infoTab {
