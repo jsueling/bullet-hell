@@ -69,9 +69,10 @@
   color: black;
 }
 
-#menuButtons {
+.menuButtons {
   display: flex;
   align-items: center;
+  justify-content: center;
   flex-direction: column;
 }
 
@@ -80,8 +81,12 @@
   margin-bottom: 4%;
 }
 
-#highScores {
+#highScoreDiv {
   display: none;
   align-items: center;
   flex-direction: column;
+}
+
+#infoTab {
+  display: none;
 }

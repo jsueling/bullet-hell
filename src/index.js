@@ -89,11 +89,17 @@ const highScore = {
 
 const canvas = document.getElementById('gameCanvas')
 const ctx = canvas.getContext('2d')
+
 const menuScreen = document.getElementById('menuScreen')
+const infoButton = document.getElementById('infoButton')
 const startButton = document.getElementById('startButton')
+const backButton = document.getElementById('backButton')
+const highScoreDiv = document.getElementById('highScoreDiv')
+const highScoreList = document.getElementById('highScoreList')
+const mainTab = document.getElementById('mainTab')
+const infoTab = document.getElementById('infoTab')
+
 const player = new Player(canvas, ctx, gameObjects) // initialize player
-const highScores = document.getElementById('highScores')
-const highScoreListElement = document.getElementById('highScoreList')
 
 window.onload = function() {
   getScores()
@@ -144,20 +150,30 @@ function startMenu() {
   // show menuScreen
   menuScreen.style.display = 'block'
 
+  if (highScore.scores.length) {
+    highScoreDiv.style.display = 'flex' // show and update highScores if they exist
+    highScoreList.innerHTML = highScore.scores.map((score) =>  `<li>TEST ${score}</li>`).join("")
+  }
+
   // initialize all stars
   for (let i=0; i < gameSettings.numStars; i++) {
     gameObjects.stars.push(new Star(canvas, ctx))
-  }
-
-  if (highScore.scores.length) {
-    highScores.style.display = 'flex' // show and update highScores if they exist
-    highScoreListElement.innerHTML = highScore.scores.map((score) =>  `<li>TEST ${score}</li>`).join("")
   }
 
   // draw the first frame of stars animation
   gameObjects.stars.forEach((star) => {
     star.draw()
   })
+}
+
+infoButton.onclick = () => {
+  mainTab.style.display = 'none'
+  infoTab.style.display = 'block'
+}
+
+backButton.onclick = () => {
+  mainTab.style.display = 'block'
+  infoTab.style.display = 'none'
 }
 
 startButton.onclick = startGame
