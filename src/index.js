@@ -95,7 +95,7 @@ const infoButton = document.getElementById('infoButton')
 const startButton = document.getElementById('startButton')
 const backButton = document.getElementById('backButton')
 const highScoreDiv = document.getElementById('highScoreDiv')
-const highScoreList = document.getElementById('highScoreList')
+const highScoreList = document.getElementsByClassName('highScore')
 const mainTab = document.getElementById('mainTab')
 const infoTab = document.getElementById('infoTab')
 
@@ -150,9 +150,21 @@ function startMenu() {
   // show menuScreen
   menuScreen.style.display = 'block'
 
-  if (highScore.scores.length) {
-    highScoreDiv.style.display = 'flex' // show and update highScores if they exist
-    highScoreList.innerHTML = highScore.scores.map((score) =>  `<li>TEST ${score}</li>`).join("")
+  if (highScore.scores.length) { // if highScores are pulled from localStorage
+    
+    // show the highScore div
+    highScoreDiv.style.display = 'flex'
+
+    // Insert scores/user input into the DOM
+    let lastHighScoreIndex = 0
+    for (let i=0; i < highScore.scores.length; i++) {
+      highScoreList[i].style.display = 'list-item'
+      highScoreList[i].textContent = `${highScore.scores[i]}`
+      lastHighScoreIndex++
+    }
+    for (let i=lastHighScoreIndex; i < highScoreList.length; i++) {
+      highScoreList[i].style.display = 'none'
+    }
   }
 
   // initialize all stars

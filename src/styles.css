@@ -48,7 +48,7 @@
   filter: drop-shadow(0 0 0.1vw white);
 }
 
-#highScoreList {
+.highScore {
   font-size: 1vw;
   filter: drop-shadow(0 0 0.1vw white);
   padding: 0;
@@ -87,8 +87,10 @@
 }
 
 #infoText {
+  font-size: 1.25vw;
   padding: 5%;
   text-align: center;
+  filter: drop-shadow(0 0 0.1vw white);
 }
 
 #infoTab {
