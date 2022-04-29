@@ -96,6 +96,8 @@ const startButton = document.getElementById('startButton')
 const backButton = document.getElementById('backButton')
 const highScoreDiv = document.getElementById('highScoreDiv')
 const highScoreList = document.getElementsByClassName('highScore')
+const modal = document.getElementsByClassName('modal')[0]
+const closeModal = document.getElementById('closeModal')
 const mainTab = document.getElementById('mainTab')
 const infoTab = document.getElementById('infoTab')
 
@@ -128,6 +130,10 @@ window.onfocus = function() {
 window.onmousemove = function(e) {
   player.x = e.x
   player.y = e.y
+}
+
+window.onclick = (e) => { // clicking on the modal background or cross removes the modal
+  if (e.target === modal || e.target === closeModal) modal.style.display = 'none'
 }
 
 // Once when opening the game, get and save scores from localStorage if they exist else the empty array
@@ -219,7 +225,7 @@ function endGame() {
 
   const finalScore = Math.round(gameSettings.totalTime/1000)
   if (finalScore > (highScore.scores[highScore.scores.length -1] || 0)) { // if beat lowest stored score (or 0 if no scores)
-    highScore.scores.push(finalScore)
+    highScore.scores.push(finalScore) // user || { name: 'user', score: finalScore }
     highScore.scores.sort((a, b) => b - a) // sort
     highScore.scores.splice(highScore.maxScores) // restrict maxLength
     localStorage.setItem('bulletHellHighScores', JSON.stringify(highScore.scores)) // save

@@ -96,3 +96,45 @@
 #infoTab {
   display: none;
 }
+
+.modal {
+  display: flex;
+  z-index: 1;
+  position: absolute;
+  justify-content: center;
+  align-items: center;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+#scoreModal {
+  padding: 1vw;
+  background-color: white;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: 0.5vw 0.5vw black;
+}
+
+#closeModal {
+  margin-left: 2vw;
+  float: right;
+  cursor: pointer;
+}
+
+#modalTitle {
+  font-size: 2vw;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1vw;
+}
+
+.modalItem {
+  margin-bottom: 1vw;
+  font-size: 1.25vw;
+}
