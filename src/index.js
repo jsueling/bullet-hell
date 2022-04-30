@@ -101,6 +101,7 @@ const closeModal = document.getElementById('closeModal')
 const mainTab = document.getElementById('mainTab')
 const infoTab = document.getElementById('infoTab')
 const highScoreForm = document.getElementById('highScoreForm')
+const modalInput = document.getElementById('modalInput')
 
 const player = new Player(canvas, ctx, gameObjects) // initialize player
 
@@ -120,6 +121,7 @@ window.onresize = function() {
   // reset the game settings for the next gameLoop and call init
   clearTimeout(timeoutIDs.resize)
   timeoutIDs.resize = setTimeout(function() {
+    cancelAnimationFrame(timeoutIDs.gameLoop)
     endGame()
     init()
   }, 100)
@@ -140,7 +142,11 @@ window.onmousemove = function(e) {
 }
 
 window.onclick = (e) => { // clicking on the modal background or cross removes the modal
-  if (e.target === modal || e.target === closeModal) modal.style.display = 'none'
+  if (e.target === modal || e.target === closeModal) {
+    modal.style.display = 'none'
+    modalInput.value = ''
+    endGame() // and ends without saving a highScore
+  }
 }
 
 function init() {
@@ -166,7 +172,7 @@ function startMenu() {
     let lastHighScoreIndex = 0
     for (let i=0; i < highScore.scores.length; i++) {
       highScoreList[i].style.display = 'list-item'
-      highScoreList[i].textContent = `${highScore.scores[i]}`
+      highScoreList[i].textContent = `${highScore.scores[i].name}: ${highScore.scores[i].score}`
       lastHighScoreIndex++
     }
     for (let i=lastHighScoreIndex; i < highScoreList.length; i++) {
@@ -186,9 +192,12 @@ function startMenu() {
 }
 
 highScoreForm.addEventListener('submit', function(e) {
-  console.log(e.target[0].value);
   e.preventDefault()
+  const userName = e.target[0].value
+  modal.style.display = 'none'
   e.target[0].value = ''
+  // extract username from form and pass through
+  endGame(userName)
 })
 
 infoButton.onclick = () => {
@@ -226,14 +235,27 @@ function startGame(e) {
   gameLoop(gameTimers.oldTimeStamp)
 }
 
-function endGame() {
+function handleScore() {
+  // first stop the animation
   cancelAnimationFrame(timeoutIDs.gameLoop)
+  const finalScore = Math.round(gameSettings.totalTime/1000)
+   // if score beats lowest stored score (or 0 if no scores)
+  if (finalScore > (highScore.scores.length ? highScore.scores[highScore.scores.length-1].score : 0)) {
+    // then show modal for username input to save highscore
+    modal.style.display = 'flex'
+  } else {
+    endGame()
+  }
+}
+
+// recieves userName from input, only stores new highScore if a name is submitted (from modal)
+function endGame(userName) {
   ctx.clearRect(0, 0, canvas.width, canvas.height)
 
-  const finalScore = Math.round(gameSettings.totalTime/1000)
-  if (finalScore > (highScore.scores[highScore.scores.length -1] || 0)) { // if beat lowest stored score (or 0 if no scores)
-    highScore.scores.push(finalScore) // user || { name: 'user', score: finalScore }
-    highScore.scores.sort((a, b) => b - a) // sort
+  if (userName) {
+    const finalScore = Math.round(gameSettings.totalTime/1000)
+    highScore.scores.push({ score: finalScore, name: userName })
+    highScore.scores.sort((a, b) => b.score - a.score) // sort
     highScore.scores.splice(highScore.maxScores) // restrict maxLength
     localStorage.setItem('bulletHellHighScores', JSON.stringify(highScore.scores)) // save
   }
@@ -246,6 +268,8 @@ function resetGame() {
   gameObjects.reset()
   gameSettings.reset()
   timeoutIDs.reset()
+  // ready for next game to start by clicking from menu again
+  startMenu()
 }
 
 function drawScore() {
@@ -401,9 +425,8 @@ function gameLoop(timeStamp) {
 
     const prj = gameObjects.radialProjectiles[i]
     prj.update()
-    if (circleCollides(player, prj)) { // check collision for each radialProjectile with Player object
-      endGame()
-      startMenu()
+    if (circleCollides(player, prj)) { // check collision for each radialProjectile with Player object which ends the game
+      handleScore()
       return
     }
     prj.draw()
@@ -425,8 +448,7 @@ function gameLoop(timeStamp) {
     const prj = gameObjects.aimedProjectiles[i]
     prj.update()
     if (circleCollides(player, prj)) { // check collision for each aimedProjectile with Player object
-      endGame()
-      startMenu()
+      handleScore()
       return
     }
     prj.draw()
