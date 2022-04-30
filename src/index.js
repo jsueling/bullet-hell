@@ -100,12 +100,19 @@ const modal = document.getElementsByClassName('modal')[0]
 const closeModal = document.getElementById('closeModal')
 const mainTab = document.getElementById('mainTab')
 const infoTab = document.getElementById('infoTab')
+const highScoreForm = document.getElementById('highScoreForm')
 
 const player = new Player(canvas, ctx, gameObjects) // initialize player
 
 window.onload = function() {
   getScores()
   init()
+}
+
+// Once when opening the game, get and save scores from localStorage if they exist else the empty array
+function getScores() {
+  const highScoreString = localStorage.getItem('bulletHellHighScores')
+  highScore.scores = JSON.parse(highScoreString) ?? []
 }
 
 window.onresize = function() {
@@ -134,12 +141,6 @@ window.onmousemove = function(e) {
 
 window.onclick = (e) => { // clicking on the modal background or cross removes the modal
   if (e.target === modal || e.target === closeModal) modal.style.display = 'none'
-}
-
-// Once when opening the game, get and save scores from localStorage if they exist else the empty array
-function getScores() {
-  const highScoreString = localStorage.getItem('bulletHellHighScores')
-  highScore.scores = JSON.parse(highScoreString) ?? []
 }
 
 function init() {
@@ -183,6 +184,12 @@ function startMenu() {
     star.draw()
   })
 }
+
+highScoreForm.addEventListener('submit', function(e) {
+  console.log(e.target[0].value);
+  e.preventDefault()
+  e.target[0].value = ''
+})
 
 infoButton.onclick = () => {
   mainTab.style.display = 'none'

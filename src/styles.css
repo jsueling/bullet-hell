@@ -112,7 +112,7 @@
 }
 
 #scoreModal {
-  padding: 1vw;
+  padding: 2vw;
   background-color: white;
   display: flex;
   flex-direction: column;
@@ -137,4 +137,9 @@
 .modalItem {
   margin-bottom: 1vw;
   font-size: 1.25vw;
+}
+
+#highScoreForm {
+  display: flex;
+  flex-direction: column;
 }

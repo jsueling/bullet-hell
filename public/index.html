@@ -13,10 +13,11 @@
           <span>New High Score!</span>
           <span id="closeModal">&times;</span>
         </div>
-        <span class="modalItem">Enter your name:</span>
-        <!-- form perhaps -->
-        <input class="modalItem" id="modalInput"></input>
-        <button class="menuButton">SUBMIT</button>
+        <form id="highScoreForm">
+          <label for="modalInput" class="modalItem">Enter your name:</label>
+          <input class="modalItem" id="modalInput" required />
+          <button type="submit" class="menuButton" >SUBMIT</button>
+        </form>
       </div>
     </div>
     <div id="menuScreen">
