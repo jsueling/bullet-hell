@@ -243,6 +243,7 @@ function handleScore() {
   if (finalScore > (highScore.scores.length ? highScore.scores[highScore.scores.length-1].score : 0)) {
     // then show modal for username input to save highscore
     modal.style.display = 'flex'
+    modalInput.focus();
   } else {
     endGame()
   }
