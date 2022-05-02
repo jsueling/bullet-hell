@@ -89,7 +89,7 @@
 #infoText {
   font-size: 1.25vw;
   padding: 0 5% 5% 5%;
-  text-align: center;
+  text-align: left;
   filter: drop-shadow(0 0 0.1vw white);
 }
 

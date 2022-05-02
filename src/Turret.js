@@ -1,5 +1,9 @@
 import { AimedProjectile, RadialProjectile } from './Projectile'
 import { gameSettings } from './index.js'
+import img from '../assets/testSpriteSheet.png'
+
+const image = new Image()
+image.src = img
 
 class Turret {
   constructor(canvas, ctx, projectiles) {
@@ -12,20 +16,31 @@ class Turret {
     this.radius = canvas.height * 0.01
     this.x = this.radius + Math.random() * (canvas.width - 2 * this.radius) // always starts with its full diameter inside the viewport
     this.y = -this.radius
+
+    this.spriteOffset = 0
+    this.spriteSize = this.radius
   }
 
   draw() {
     this.ctx.save()
     this.ctx.translate(this.x, this.y)
+
     this.ctx.fillStyle = this.colour
     this.ctx.beginPath()
     this.ctx.arc(0, 0, this.radius, 0, 2 * Math.PI)
     this.ctx.fill()
+
+    this.ctx.drawImage(image, this.spriteOffset, 0, 200, 200, -this.spriteSize, -this.spriteSize, this.spriteSize * 2, this.spriteSize * 2) // https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/drawImage
+    // this.ctx.restore()  // 100*100 rad, 200*200 sq, center 100,100
+
     this.ctx.restore()
   }
 
   update() {
     this.y += this.velY
+
+    // changes sprite every render
+    this.spriteOffset = (this.spriteOffset + 200) % 600
 
     if (this.y > this.canvas.height + this.radius) { // OOB reset turret to top of screen
       this.x = Math.random() * this.canvas.width
