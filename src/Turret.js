@@ -1,9 +1,9 @@
 import { AimedProjectile, RadialProjectile } from './Projectile'
 import { gameSettings } from './index.js'
-import img from '../assets/testSpriteSheet.png'
+import greenTurret from '../assets/greenTurretTest.png'
 
-const image = new Image()
-image.src = img
+const spriteSheet = new Image()
+spriteSheet.src = greenTurret
 
 class Turret {
   constructor(canvas, ctx, projectiles) {
@@ -19,6 +19,7 @@ class Turret {
 
     this.spriteOffset = 0
     this.spriteSize = this.radius
+    this.spriteCounter = 0
   }
 
   draw() {
@@ -30,8 +31,8 @@ class Turret {
     this.ctx.arc(0, 0, this.radius, 0, 2 * Math.PI)
     this.ctx.fill()
 
-    this.ctx.drawImage(image, this.spriteOffset, 0, 200, 200, -this.spriteSize, -this.spriteSize, this.spriteSize * 2, this.spriteSize * 2) // https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/drawImage
-    // this.ctx.restore()  // 100*100 rad, 200*200 sq, center 100,100
+    this.ctx.drawImage(spriteSheet, this.spriteOffset, 0, 200, 400, -this.spriteSize * 2, -this.spriteSize * 6, this.spriteSize * 4, this.spriteSize * 8) // https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/drawImage
+    // 100*100 diameter, 200*200 pixel square, center 100,100,
 
     this.ctx.restore()
   }
@@ -40,7 +41,11 @@ class Turret {
     this.y += this.velY
 
     // changes sprite every render
-    this.spriteOffset = (this.spriteOffset + 200) % 600
+    if (this.spriteCounter % 20 === 0) {
+      this.spriteOffset = (this.spriteOffset + 200) % 800
+    }
+
+    this.spriteCounter += 1
 
     if (this.y > this.canvas.height + this.radius) { // OOB reset turret to top of screen
       this.x = Math.random() * this.canvas.width
