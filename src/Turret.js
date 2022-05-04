@@ -1,9 +1,14 @@
 import { AimedProjectile, RadialProjectile } from './Projectile'
 import { gameSettings } from './index.js'
-import greenTurret from '../assets/greenTurretTest.png'
 
-const spriteSheet = new Image()
-spriteSheet.src = greenTurret
+import redTurretFlame7 from '../assets/redTurretFlame7.png'
+import greenTurretFlame2 from '../assets/greenTurretFlame2.png'
+
+const greenSprite = new Image()
+greenSprite.src = greenTurretFlame2
+
+const redSprite = new Image()
+redSprite.src = redTurretFlame7
 
 class Turret {
   constructor(canvas, ctx, projectiles) {
@@ -22,26 +27,10 @@ class Turret {
     this.spriteCounter = 0
   }
 
-  draw() {
-    this.ctx.save()
-    this.ctx.translate(this.x, this.y)
-
-    this.ctx.fillStyle = this.colour
-    this.ctx.beginPath()
-    this.ctx.arc(0, 0, this.radius, 0, 2 * Math.PI)
-    this.ctx.fill()
-
-    this.ctx.drawImage(spriteSheet, this.spriteOffset, 0, 200, 400, -this.spriteSize * 2, -this.spriteSize * 6, this.spriteSize * 4, this.spriteSize * 8) // https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/drawImage
-    // 100*100 diameter, 200*200 pixel square, center 100,100,
-
-    this.ctx.restore()
-  }
-
   update() {
     this.y += this.velY
 
-    // changes sprite every render
-    if (this.spriteCounter % 20 === 0) {
+    if (this.spriteCounter % 5 === 0) { // cycle sprite sheet
       this.spriteOffset = (this.spriteOffset + 200) % 800
     }
 
@@ -66,7 +55,7 @@ class Turret {
 export class RadialTurret extends Turret {
   constructor(canvas, ctx, projectiles) {
     super(canvas, ctx, projectiles)
-    this.colour = 'red'
+    this.colour = '#f17479'
     let turretSpeed = this.canvas.height * (Math.random() * 0.00025 + 0.00025)
     // if hardMode enabled, change turretSpeed 50% of the time
     if (gameSettings.hardMode && Math.random() < 0.5) turretSpeed = this.canvas.height * (Math.random() * 0.005 + 0.005)
@@ -83,6 +72,20 @@ export class RadialTurret extends Turret {
       'darkPink',
       'magenta'
     ]
+  }
+
+  draw() {
+    this.ctx.save()
+    this.ctx.translate(this.x, this.y)
+
+    this.ctx.fillStyle = this.colour
+    // https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/drawImage
+    this.ctx.drawImage(redSprite, this.spriteOffset, 0, 200, 400, -this.spriteSize * 2, -this.spriteSize * 6, this.spriteSize * 4, this.spriteSize * 8)
+    this.ctx.beginPath()
+    this.ctx.arc(0, 0, this.radius, 0, 2 * Math.PI)
+    this.ctx.fill()
+
+    this.ctx.restore()
   }
 
   #fireRadial(projectileColour) { // fires evenly spaced projectiles emitted from the centre of each turret
@@ -178,7 +181,7 @@ export class AimedTurret extends Turret {
   constructor(canvas, ctx, projectiles, player) {
     super(canvas, ctx, projectiles)
     this.player = player
-    this.colour = 'green'
+    this.colour = '#4caf50'
     this.velY = canvas.height * (Math.random() * 0.0005 + 0.0005) // velocity varying between 0.05 to 0.1 % of canvas height
     this.offSet = Math.PI * 0.04
     this.fireAimedMethods = [
@@ -191,6 +194,21 @@ export class AimedTurret extends Turret {
     if (gameSettings.hardMode) {
       this.fireAimedMethods.push(this.#overTakeAttack)
     }
+  }
+
+  draw() {
+    this.ctx.save()
+    this.ctx.translate(this.x, this.y)
+
+    this.ctx.fillStyle = this.colour
+    // https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/drawImage
+    this.ctx.drawImage(greenSprite, this.spriteOffset, 0, 200, 400, -this.spriteSize * 2, -this.spriteSize * 6, this.spriteSize * 4, this.spriteSize * 8)
+  
+    this.ctx.beginPath()
+    this.ctx.arc(0, 0, this.radius, 0, 2 * Math.PI)
+    this.ctx.fill()
+
+    this.ctx.restore()
   }
 
   #lineAttack(projectileHue, minProjectileLight, maxProjectileLight) { // fires a line of projectiles aimed at the player
