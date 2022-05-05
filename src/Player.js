@@ -1,10 +1,10 @@
 import { PlayerProjectile } from "./Projectile"
 import { gameTimers, gameObjects } from './index.js'
 
-import playerGlow from '../assets/playerGlow.png'
+// import playerGlow4 from '../assets/playerGlow4.png' TODO
 
-const glowSprite = new Image()
-glowSprite.src = playerGlow
+// const glowSprite = new Image()
+// glowSprite.src = playerGlow4
 
 export class Player {
   constructor(canvas, ctx) {
@@ -14,27 +14,32 @@ export class Player {
     this.y = 0,
     this.radius = canvas.height * 0.01 // Player Object size is responsive to canvas height
     this.fireIntervalID = undefined
+    this.colour = '#7dabff'
 
-    this.spriteOffset = 0
-    this.spriteSize = this.radius
-    this.spriteCounter = 0
+    // this.spriteOffset = 0
+    // this.spriteSize = this.radius
+    // this.spriteCounter = 0
   }
   draw() {
     this.ctx.save()
     this.ctx.translate(this.x, this.y)
-    this.ctx.fillStyle = '#7dabff'
+    this.ctx.fillStyle = this.colour
 
-    this.ctx.drawImage(glowSprite, this.spriteOffset, 0, 200, 200, -this.spriteSize * 2, -this.spriteSize * 2, this.spriteSize * 4, this.spriteSize * 4)
+    this.ctx.shadowColor = this.colour
+    this.ctx.shadowBlur = this.canvas.height * 0.004
+
+    // this.ctx.drawImage(glowSprite, this.spriteOffset, 0, 200, 200, -this.spriteSize * 2, -this.spriteSize * 2, this.spriteSize * 4, this.spriteSize * 4)
+
     this.ctx.beginPath()
     this.ctx.arc(0, 0, this.radius, 0, 2 * Math.PI)
     this.ctx.fill()
     this.ctx.restore()
 
-    if (this.spriteCounter % 20 === 0) { // cycle sprite sheet
-      this.spriteOffset = (this.spriteOffset + 200) % 800
-    }
+    // if (this.spriteCounter % 5 === 0) { // cycle sprite sheet
+    //   this.spriteOffset = (this.spriteOffset + 200) % 800
+    // }
 
-    this.spriteCounter += 1
+    // this.spriteCounter += 1
   }
   resize() { // resize the player object relative to the canvas
     this.radius = this.canvas.height * 0.01

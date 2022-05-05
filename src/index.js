@@ -189,6 +189,11 @@ function startMenu() {
   gameObjects.stars.forEach((star) => {
     star.draw()
   })
+
+  ctx.save()
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.7)'
+  ctx.fillRect(0, 0, canvas.width, canvas.height)
+  ctx.restore()
 }
 
 highScoreForm.addEventListener('submit', function(e) {
@@ -295,7 +300,7 @@ function gameLoop(timeStamp) {
   })
 
   ctx.save()
-  ctx.fillStyle = 'rgba(0, 0, 0, 0.5)' // cheap trail effect
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.7)' // cheap trail effect
   ctx.fillRect(0, 0, canvas.width, canvas.height)
   ctx.restore()
 

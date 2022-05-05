@@ -1,14 +1,14 @@
 import { AimedProjectile, RadialProjectile } from './Projectile'
 import { gameSettings } from './index.js'
 
-import redTurretFlame7 from '../assets/redTurretFlame7.png'
-import greenTurretFlame2 from '../assets/greenTurretFlame2.png'
+import redTurretParticles from '../assets/redTurretParticles2.png'
+import greenTurretParticles from '../assets/greenTurretParticles3.png'
 
 const greenSprite = new Image()
-greenSprite.src = greenTurretFlame2
+greenSprite.src = greenTurretParticles
 
 const redSprite = new Image()
-redSprite.src = redTurretFlame7
+redSprite.src = redTurretParticles
 
 class Turret {
   constructor(canvas, ctx, projectiles) {
@@ -30,7 +30,7 @@ class Turret {
   update() {
     this.y += this.velY
 
-    if (this.spriteCounter % 5 === 0) { // cycle sprite sheet
+    if (this.spriteCounter % 8 === 0) { // cycle sprite sheet
       this.spriteOffset = (this.spriteOffset + 200) % 800
     }
 
@@ -77,6 +77,9 @@ export class RadialTurret extends Turret {
   draw() {
     this.ctx.save()
     this.ctx.translate(this.x, this.y)
+
+    this.ctx.shadowColor = this.colour
+    this.ctx.shadowBlur = this.canvas.height * 0.004
 
     this.ctx.fillStyle = this.colour
     // https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/drawImage
@@ -199,6 +202,9 @@ export class AimedTurret extends Turret {
   draw() {
     this.ctx.save()
     this.ctx.translate(this.x, this.y)
+
+    this.ctx.shadowColor = this.colour
+    this.ctx.shadowBlur = this.canvas.height * 0.004
 
     this.ctx.fillStyle = this.colour
     // https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/drawImage
