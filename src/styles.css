@@ -48,6 +48,16 @@
   filter: drop-shadow(0 0 0.1vw white);
 }
 
+ol {
+  padding: 0;
+  margin: 0;
+}
+
+ul {
+  margin: 0;
+  padding: 0;
+}
+
 .highScore {
   font-size: 1vw;
   filter: drop-shadow(0 0 0.1vw white);
@@ -60,6 +70,8 @@
   background: black;
   filter: drop-shadow(0 0 0.1vw white);
   color: white;
+  border: 0;
+  padding: 2%;
 }
 
 .menuButton:hover {

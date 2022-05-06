@@ -122,6 +122,7 @@ window.onresize = function() {
   clearTimeout(timeoutIDs.resize)
   timeoutIDs.resize = setTimeout(function() {
     cancelAnimationFrame(timeoutIDs.gameLoop)
+    modal.style.display = 'none'
     canvas.width = window.innerWidth
     canvas.height = window.innerHeight
     player.resize()
