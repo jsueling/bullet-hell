@@ -122,8 +122,10 @@ window.onresize = function() {
   clearTimeout(timeoutIDs.resize)
   timeoutIDs.resize = setTimeout(function() {
     cancelAnimationFrame(timeoutIDs.gameLoop)
+    canvas.width = window.innerWidth
+    canvas.height = window.innerHeight
+    player.resize()
     endGame()
-    init()
   }, 100)
 }
 

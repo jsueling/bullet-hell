@@ -79,7 +79,7 @@ export class RadialTurret extends Turret {
     this.ctx.translate(this.x, this.y)
 
     this.ctx.shadowColor = this.colour
-    this.ctx.shadowBlur = this.canvas.height * 0.004
+    this.ctx.shadowBlur = this.canvas.height * 0.005
 
     this.ctx.fillStyle = this.colour
     // https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/drawImage
@@ -204,7 +204,7 @@ export class AimedTurret extends Turret {
     this.ctx.translate(this.x, this.y)
 
     this.ctx.shadowColor = this.colour
-    this.ctx.shadowBlur = this.canvas.height * 0.004
+    this.ctx.shadowBlur = this.canvas.height * 0.005
 
     this.ctx.fillStyle = this.colour
     // https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/drawImage

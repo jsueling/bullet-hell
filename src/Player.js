@@ -26,7 +26,7 @@ export class Player {
     this.ctx.fillStyle = this.colour
 
     this.ctx.shadowColor = this.colour
-    this.ctx.shadowBlur = this.canvas.height * 0.004
+    this.ctx.shadowBlur = this.canvas.height * 0.005
 
     // this.ctx.drawImage(glowSprite, this.spriteOffset, 0, 200, 200, -this.spriteSize * 2, -this.spriteSize * 2, this.spriteSize * 4, this.spriteSize * 4)
 
