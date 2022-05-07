@@ -91,6 +91,10 @@ ul {
   margin-bottom: 4%;
 }
 
+#toggleFullscreenButton {
+  margin-bottom: 4%;
+}
+
 #highScoreDiv {
   display: none;
   padding: 0 5% 5% 5%;

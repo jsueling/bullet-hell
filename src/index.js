@@ -3,6 +3,7 @@ import Star from './Star'
 import Particle from './Particle'
 import { AimedTurret, RadialTurret } from './Turret'
 import { Player } from './Player'
+import { toggleFullscreen } from '../utils/fullScreen'
 
 // using circular Projectile and Player Object hitboxes to simplify collision detection and improve performance
 
@@ -102,12 +103,16 @@ const mainTab = document.getElementById('mainTab')
 const infoTab = document.getElementById('infoTab')
 const highScoreForm = document.getElementById('highScoreForm')
 const modalInput = document.getElementById('modalInput')
+const toggleFullscreenButton = document.getElementById('toggleFullscreenButton')
+
+toggleFullscreenButton.onclick = toggleFullscreen
 
 const player = new Player(canvas, ctx, gameObjects) // initialize player
 
 window.onload = function() {
   getScores()
   init()
+  startMenu()
 }
 
 // Once when opening the game, get and save scores from localStorage if they exist else the empty array
@@ -123,9 +128,7 @@ window.onresize = function() {
   timeoutIDs.resize = setTimeout(function() {
     cancelAnimationFrame(timeoutIDs.gameLoop)
     modal.style.display = 'none'
-    canvas.width = window.innerWidth
-    canvas.height = window.innerHeight
-    player.resize()
+    init()
     endGame()
   }, 100)
 }
@@ -158,8 +161,6 @@ function init() {
   canvas.height = window.innerHeight
 
   player.resize() // responsive player
-
-  startMenu()
 }
 
 function startMenu() {
