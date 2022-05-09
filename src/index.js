@@ -448,11 +448,6 @@ function gameLoop(timeStamp) {
   }
 
   // Draw and update aimed turrets/projectiles
-  gameObjects.aimedTurrets.forEach((turret) => {
-    turret.update()
-    turret.draw()
-  })
-
   for (let i=0; i < gameObjects.aimedProjectiles.length; i++) {
 
     const prj = gameObjects.aimedProjectiles[i]
@@ -468,6 +463,11 @@ function gameLoop(timeStamp) {
       i--
     }
   }
+
+  gameObjects.aimedTurrets.forEach((turret) => {
+    turret.update()
+    turret.draw()
+  })
 
   timeoutIDs.gameLoop = window.requestAnimationFrame(gameLoop)
 }

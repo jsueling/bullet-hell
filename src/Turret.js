@@ -1,14 +1,18 @@
 import { AimedProjectile, RadialProjectile } from './Projectile'
 import { gameSettings } from './index.js'
 
-import redTurretParticles from '../assets/redTurretParticles2.png'
-import greenTurretParticles from '../assets/greenTurretParticles3.png'
+import redParticleSheet from '../assets/redTurretParticles2.png'
+import greenParticleSheet from '../assets/greenTurretParticles3.png'
+import aimedBarrelSprite from '../assets/aimedBarrelTest.png'
 
-const greenSprite = new Image()
-greenSprite.src = greenTurretParticles
+const aimedBarrel = new Image()
+aimedBarrel.src = aimedBarrelSprite
 
-const redSprite = new Image()
-redSprite.src = redTurretParticles
+const aimedTurGlow = new Image()
+aimedTurGlow.src = greenParticleSheet
+
+const radialTurGlow = new Image()
+radialTurGlow.src = redParticleSheet
 
 class Turret {
   constructor(canvas, ctx, projectiles) {
@@ -83,7 +87,7 @@ export class RadialTurret extends Turret {
 
     this.ctx.fillStyle = this.colour
     // https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/drawImage
-    this.ctx.drawImage(redSprite, this.spriteOffset, 0, 200, 400, -this.spriteSize * 2, -this.spriteSize * 6, this.spriteSize * 4, this.spriteSize * 8)
+    this.ctx.drawImage(radialTurGlow, this.spriteOffset, 0, 200, 400, -this.spriteSize * 2, -this.spriteSize * 6, this.spriteSize * 4, this.spriteSize * 8)
     this.ctx.beginPath()
     this.ctx.arc(0, 0, this.radius, 0, 2 * Math.PI)
     this.ctx.fill()
@@ -208,12 +212,20 @@ export class AimedTurret extends Turret {
 
     this.ctx.fillStyle = this.colour
     // https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/drawImage
-    this.ctx.drawImage(greenSprite, this.spriteOffset, 0, 200, 400, -this.spriteSize * 2, -this.spriteSize * 6, this.spriteSize * 4, this.spriteSize * 8)
+    this.ctx.drawImage(aimedTurGlow, this.spriteOffset, 0, 200, 400, -this.spriteSize * 2, -this.spriteSize * 6, this.spriteSize * 4, this.spriteSize * 8)
   
     this.ctx.beginPath()
     this.ctx.arc(0, 0, this.radius, 0, 2 * Math.PI)
     this.ctx.fill()
 
+    this.ctx.restore()
+
+    // barrel sprite
+    this.ctx.save()
+    this.ctx.translate(this.x, this.y)
+    const angleTest = Math.atan2(this.y - this.player.y, this.player.x - this.x)
+    this.ctx.rotate(-angleTest + Math.PI / 2)
+    this.ctx.drawImage(aimedBarrel, -this.radius * 2, -this.radius * 2, this.radius * 4, this.radius * 4)
     this.ctx.restore()
   }
 
