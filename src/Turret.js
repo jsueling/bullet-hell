@@ -40,7 +40,7 @@ class Turret {
 
     this.spriteCounter += 1
 
-    if (this.y > this.canvas.height + this.radius) { // OOB reset turret to top of screen
+    if (this.y > this.canvas.height + this.radius * 6) { // OOB reset turret to top of screen, accounting for spriteSheet size
       this.x = Math.random() * this.canvas.width
       this.y = -this.radius
     }
@@ -223,8 +223,10 @@ export class AimedTurret extends Turret {
     // barrel sprite
     this.ctx.save()
     this.ctx.translate(this.x, this.y)
-    const angleTest = Math.atan2(this.y - this.player.y, this.player.x - this.x)
-    this.ctx.rotate(-angleTest + Math.PI / 2)
+    // correct for y axis being positive in downward direction with * -1
+    const angleToPlayer = Math.atan2(-1 * (this.player.y - this.y), this.player.x - this.x)
+    // ctx.rotate() rotates from the x-axis down while math.atan2 gives us an angle from the x-axis up. the sprite is drawn facing up which we also need to correct for
+    this.ctx.rotate(-angleToPlayer + Math.PI / 2)
     this.ctx.drawImage(aimedBarrel, -this.radius * 2, -this.radius * 2, this.radius * 4, this.radius * 4)
     this.ctx.restore()
   }
