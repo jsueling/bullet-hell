@@ -3,7 +3,7 @@ import { gameSettings } from './index.js'
 
 import redParticleSheet from '../assets/redTurretParticles2.png'
 import greenParticleSheet from '../assets/greenTurretParticles3.png'
-import aimedBarrelSprite from '../assets/aimedBarrelTest.png'
+import aimedBarrelSprite from '../assets/aimedBarrel.png'
 
 const aimedBarrel = new Image()
 aimedBarrel.src = aimedBarrelSprite
