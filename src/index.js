@@ -447,6 +447,11 @@ function gameLoop(timeStamp) {
     }
   }
 
+  // barrel on top of projectiles
+  gameObjects.radialTurrets.forEach((turret) => {
+    turret.drawBarrel()
+  })
+
   // Draw and update aimed turrets/projectiles
   for (let i=0; i < gameObjects.aimedProjectiles.length; i++) {
 

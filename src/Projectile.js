@@ -36,10 +36,10 @@ export class RadialProjectile extends Projectile {
       case 'red':
         this.colours = ['hsl(360, 82%, 50%)', 'hsl(360, 82%, 60%)', 'hsl(360, 82%, 70%)', 'hsl(360, 82%, 80%)', 'hsl(360, 82%, 90%)'] // https://www.w3schools.com/colors/colors_hsl.asp
         break
-      case 'darkPink':
+      case 'orange':
         this.colours = ['hsl(10, 82%, 90%)', 'hsl(10, 82%, 80%)', 'hsl(10, 82%, 70%)', 'hsl(10, 82%, 60%)', 'hsl(10, 82%, 50%)']
         break
-      case 'magenta':
+      case 'pink':
         this.colours = ['hsl(350, 82%, 50%)', 'hsl(350, 82%, 60%)', 'hsl(350, 82%, 70%)', 'hsl(350, 82%, 80%)', 'hsl(350, 82%, 90%)']
         break
     }

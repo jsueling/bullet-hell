@@ -4,9 +4,13 @@ import { gameSettings } from './index.js'
 import redParticleSheet from '../assets/redTurretParticles2.png'
 import greenParticleSheet from '../assets/greenTurretParticles3.png'
 import aimedBarrelSprite from '../assets/aimedBarrel.png'
+import radialBarrelSprite from '../assets/radialBarrel.png'
 
 const aimedBarrel = new Image()
 aimedBarrel.src = aimedBarrelSprite
+
+const radialBarrel = new Image()
+radialBarrel.src = radialBarrelSprite
 
 const aimedTurGlow = new Image()
 aimedTurGlow.src = greenParticleSheet
@@ -73,8 +77,8 @@ export class RadialTurret extends Turret {
     ]
     this.projectileColours = [
       'red',
-      'darkPink',
-      'magenta'
+      'orange',
+      'pink'
     ]
   }
 
@@ -92,6 +96,13 @@ export class RadialTurret extends Turret {
     this.ctx.arc(0, 0, this.radius, 0, 2 * Math.PI)
     this.ctx.fill()
 
+    this.ctx.restore()
+  }
+
+  drawBarrel() {
+    this.ctx.save()
+    this.ctx.translate(this.x, this.y)
+    this.ctx.drawImage(radialBarrel, -this.radius * 2, -this.radius * 2, this.radius * 4, this.radius * 4)
     this.ctx.restore()
   }
 
