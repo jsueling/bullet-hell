@@ -77,7 +77,7 @@ export class RadialTurret extends Turret {
     ]
     this.projectileColours = [
       'red',
-      'orange',
+      'magenta',
       'pink'
     ]
   }

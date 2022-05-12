@@ -519,20 +519,17 @@ function increaseDifficulty() {
 
   // hardMode starts at 15s
   if (gameSettings.difficultyCounter === 10) { // set hardMode after X amount of calls to increaseDifficulty
-    console.log('hardmode');
     gameSettings.hardMode = true
   }
 
   // 60, 160, 260, 360
   if (gameSettings.difficultyCounter % 11 === 0) {
-    console.log('increased maxTurrets');
     gameSettings.maxAimedTurrets += 1
     gameSettings.maxRadialTurrets += 1
   }
 
   // 30, 55, 80, 105, 130
   if (gameSettings.difficultyCounter % 5 === 0) {
-    console.log('increased projectileCount');
     gameSettings.numAimedProjectiles += 1
     gameSettings.numRadialProjectiles += 1
   }

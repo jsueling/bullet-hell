@@ -34,13 +34,13 @@ export class RadialProjectile extends Projectile {
     this.radius = canvas.height * 0.003
     switch(radialProjectileColour) {
       case 'red':
-        this.colours = ['hsl(360, 82%, 50%)', 'hsl(360, 82%, 60%)', 'hsl(360, 82%, 70%)', 'hsl(360, 82%, 80%)', 'hsl(360, 82%, 90%)'] // https://www.w3schools.com/colors/colors_hsl.asp
+        this.colours = ['hsl(0, 100%, 50%)', 'hsl(0, 100%, 60%)', 'hsl(0, 100%, 70%)', 'hsl(0, 100%, 80%)', 'hsl(0, 100%, 90%)'] // https://www.w3schools.com/colors/colors_hsl.asp
         break
-      case 'orange':
-        this.colours = ['hsl(10, 82%, 90%)', 'hsl(10, 82%, 80%)', 'hsl(10, 82%, 70%)', 'hsl(10, 82%, 60%)', 'hsl(10, 82%, 50%)']
+      case 'magenta':
+        this.colours = ['hsl(320, 82%, 50%)', 'hsl(320, 82%, 60%)', 'hsl(320, 82%, 70%)', 'hsl(320, 82%, 80%)', 'hsl(320, 82%, 90%)']
         break
       case 'pink':
-        this.colours = ['hsl(350, 82%, 50%)', 'hsl(350, 82%, 60%)', 'hsl(350, 82%, 70%)', 'hsl(350, 82%, 80%)', 'hsl(350, 82%, 90%)']
+        this.colours = ['hsl(340, 82%, 50%)', 'hsl(340, 82%, 60%)', 'hsl(340, 82%, 70%)', 'hsl(340, 82%, 80%)', 'hsl(340, 82%, 90%)']
         break
     }
   }

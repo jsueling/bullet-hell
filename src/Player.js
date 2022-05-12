@@ -1,7 +1,7 @@
 import { PlayerProjectile } from "./Projectile"
 import { gameTimers, gameObjects } from './index.js'
 
-import playerParticleSheet from '../assets/playerParticles.png'
+import playerParticleSheet from '../assets/playerParticles2.png'
 import playerBarrelSprite from '../assets/playerBarrels.png'
 
 const playerBarrels = new Image()
@@ -45,7 +45,7 @@ export class Player {
     this.ctx.fill()
     this.ctx.restore()
 
-    if (this.spriteCounter % 10 === 0) { // cycle sprite sheet
+    if (this.spriteCounter % 12 === 0) { // cycle sprite sheet
       this.spriteOffset = (this.spriteOffset + 200) % 800
     }
 
