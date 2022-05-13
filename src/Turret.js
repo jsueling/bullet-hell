@@ -4,13 +4,9 @@ import { gameSettings } from './index.js'
 import redParticleSheet from '../assets/redTurretParticles2.png'
 import greenParticleSheet from '../assets/greenTurretParticles3.png'
 import aimedBarrelSprite from '../assets/aimedBarrel.png'
-import radialBarrelSprite from '../assets/radialBarrel.png'
 
 const aimedBarrel = new Image()
 aimedBarrel.src = aimedBarrelSprite
-
-const radialBarrel = new Image()
-radialBarrel.src = radialBarrelSprite
 
 const aimedTurGlow = new Image()
 aimedTurGlow.src = greenParticleSheet
@@ -23,7 +19,6 @@ class Turret {
     this.canvas = canvas
     this.ctx = ctx
     this.projectiles = projectiles
-    this.velX = 0
     this.fireTimeoutID = undefined // stores the debounced timeoutID call for this turret to invoke a fire method once
     this.delayedTimeoutIDs = [] // stores the current timeoutIDs of this turret's fire methods
     this.radius = canvas.height * 0.01
@@ -101,8 +96,19 @@ export class RadialTurret extends Turret {
 
   drawBarrel() {
     this.ctx.save()
+
     this.ctx.translate(this.x, this.y)
-    this.ctx.drawImage(radialBarrel, -this.radius * 2, -this.radius * 2, this.radius * 4, this.radius * 4)
+
+    this.ctx.fillStyle = 'rgba(255,255,255, 0.5)'
+    this.ctx.beginPath()
+    this.ctx.arc(0, 0, this.radius*0.3, 0, 2*Math.PI)
+    this.ctx.fill()
+
+    this.ctx.fillStyle = 'white'
+    this.ctx.beginPath()
+    this.ctx.arc(0, 0, this.radius*0.2, 0, 2*Math.PI)
+    this.ctx.fill()
+
     this.ctx.restore()
   }
 

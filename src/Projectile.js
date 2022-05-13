@@ -8,8 +8,6 @@ class Projectile {
     this.velY = velY * (canvas.height + canvas.width) * 0.0005
   }
 
-  // removed shadowBlur from projectiles because it kills performance
-
   draw() {
     this.ctx.save()
     this.ctx.translate(this.x, this.y)
