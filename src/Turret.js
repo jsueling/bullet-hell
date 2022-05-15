@@ -202,7 +202,6 @@ export class AimedTurret extends Turret {
     this.player = player
     this.colour = '#4caf50'
     this.velY = canvas.height * (Math.random() * 0.0005 + 0.0005) // velocity varying between 0.05 to 0.1 % of canvas height
-    this.offSet = Math.PI * 0.04
     this.projectileLight = 73
     this.minProjectileHue = 80
     this.maxProjectileHue = 180
@@ -211,12 +210,13 @@ export class AimedTurret extends Turret {
     this.fireAimedMethods = [
       this.#lineAttack,
       this.#coneAttack,
-      this.#shotgunAttack
+      this.#shotgunAttack,
+      // this.#overTakeArrowAttack
     ]
 
-    // When hardMode is enabled newly created aimedTurrets have access to the overTakeAttack fire method
+    // When hardMode is enabled newly created aimedTurrets have access to the overtakeWaveAttack fire method
     if (gameSettings.hardMode) {
-      this.fireAimedMethods.push(this.#overTakeAttack)
+      this.fireAimedMethods.push(this.#overtakeWaveAttack)
     }
   }
 
@@ -249,7 +249,7 @@ export class AimedTurret extends Turret {
   }
 
   #lineAttack() { // fires a line of projectiles aimed at the player
-    const projectiles = gameSettings.numAimedProjectiles * 2
+    const projectiles = gameSettings.numAimedProjectiles
     const colourIncrement = this.projectileHueRange / projectiles
     for (let i=0; i < projectiles; i++) {
       this.delayedTimeoutIDs.push(
@@ -263,7 +263,7 @@ export class AimedTurret extends Turret {
     const dist = Math.sqrt((this.x - this.player.x)**2 + (this.y - this.player.y)**2)
     const velX = (this.player.x - this.x) / dist // normalized vectors pointing from the turret to the player
     const velY = (this.player.y - this.y) / dist
-    const magnitude = 2
+    const magnitude = 3
     this.projectiles.push(new AimedProjectile(this.canvas, this.ctx, this.x, this.y, magnitude * velX, magnitude * velY, projectileColour))
   }
 
@@ -281,8 +281,9 @@ export class AimedTurret extends Turret {
   #fireConeRow(rowLen, projectileColour) { // fires a single row centered targeting the player
     // Math.atan2 https://en.wikipedia.org/wiki/Atan2
     const angleFromTurretToPlayer = Math.atan2(this.player.y - this.y, this.player.x - this.x)
-     // align each row (startAngle) so that it centers the target differing for odd/even row length
-    const startAngle = angleFromTurretToPlayer - this.offSet * (rowLen % 2 == 0 ? rowLen * 0.5 - 0.5 : Math.floor(rowLen * 0.5))
+    // align each row (startAngle) so that it centers the target differing for odd/even row length
+    const offset = Math.PI * 0.01
+    const startAngle = angleFromTurretToPlayer - offset * (rowLen % 2 == 0 ? rowLen * 0.5 - 0.5 : Math.floor(rowLen * 0.5))
     const magnitude = 1.5
 
     for (let i=0; i < rowLen; i++) {
@@ -292,8 +293,8 @@ export class AimedTurret extends Turret {
           this.ctx,
           this.x,
           this.y,
-          magnitude * Math.cos(this.offSet * i + startAngle),
-          magnitude * Math.sin(this.offSet * i + startAngle),
+          magnitude * Math.cos(offset * i + startAngle),
+          magnitude * Math.sin(offset * i + startAngle),
           projectileColour
         )
       )
@@ -301,7 +302,7 @@ export class AimedTurret extends Turret {
   }
 
   // Fire consecutive waves at the player, each wave is faster than the last and the start of the wave is offSet more relative to the target => overtake or unfolding animation
-  #overTakeAttack() { // credits to: https://youtu.be/xbQ9e0zYuj4?t=221
+  #overtakeWaveAttack() { // credits to: https://youtu.be/xbQ9e0zYuj4?t=221
     const numWaves = gameSettings.numAimedProjectiles * 3
     const colourIncrement = this.projectileHueRange / numWaves
     for (let i=0; i < numWaves; i++) {
@@ -339,6 +340,17 @@ export class AimedTurret extends Turret {
         )
       )
     }
+  }
+
+  #overtakeArrowAttack() {
+    const arrowHeight = gameSettings.numAimedProjectiles
+    const colourIncrement = this.projectileHueRange / arrowHeight
+    const angleFromTurretToPlayer = Math.atan2(this.player.y - this.y, this.player.x - this.x)
+
+  }
+
+  #overtakeArrow() {
+
   }
 
   // Fires projectiles tightly but randomly spread towards the player
