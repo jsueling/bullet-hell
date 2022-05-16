@@ -211,7 +211,7 @@ export class AimedTurret extends Turret {
       this.#lineAttack,
       this.#coneAttack,
       this.#shotgunAttack,
-      // this.#overTakeArrowAttack
+      this.#overtakeArrowAttack
     ]
 
     // When hardMode is enabled newly created aimedTurrets have access to the overtakeWaveAttack fire method
@@ -308,7 +308,7 @@ export class AimedTurret extends Turret {
     for (let i=0; i < numWaves; i++) {
       this.delayedTimeoutIDs.push(
         setTimeout(
-          this.#overTakeWave.bind(
+          this.#overtakeWave.bind(
             this,
             0.3 + (i+1) * 0.3,
             (i+1) * 0.02 * Math.PI,
@@ -322,7 +322,7 @@ export class AimedTurret extends Turret {
     }
   }
 
-  #overTakeWave(magnitude, globalOffset, projectileColour) {
+  #overtakeWave(magnitude, globalOffset, projectileColour) {
     const angleFromTurretToPlayer = Math.atan2(this.player.y - this.y, this.player.x - this.x)
     const innerOffset = 0.1 * Math.PI
     const startAngle = angleFromTurretToPlayer - innerOffset * 2.5
@@ -343,14 +343,59 @@ export class AimedTurret extends Turret {
   }
 
   #overtakeArrowAttack() {
-    const arrowHeight = gameSettings.numAimedProjectiles
-    const colourIncrement = this.projectileHueRange / arrowHeight
+    const arrowWidth = gameSettings.numAimedProjectiles // 5
+    const colourIncrement = this.projectileHueRange / arrowWidth
     const angleFromTurretToPlayer = Math.atan2(this.player.y - this.y, this.player.x - this.x)
+    const angleIncrement = Math.PI * 0.05
+    const magnitude = 1
 
+    let angle = angleFromTurretToPlayer - (arrowWidth + 1) * angleIncrement
+
+    for (let i=0; i < arrowWidth; i++) {
+      this.delayedTimeoutIDs.push(
+        setTimeout(
+          this.#overtakeArrow.bind(
+            this,
+            angle,
+            magnitude * (i + 1), // * 0.1
+            `hsl(${this.minProjectileHue + (colourIncrement * i)}, ${this.projectileSaturation}%, ${this.projectileLight}%)`
+          ),
+          i * 100
+        )
+      )
+      angle += angleIncrement
+    }
+
+    angle += angleIncrement * 2 // head
+
+    for (let i=arrowWidth-1; i >= 0; i--) {
+      this.delayedTimeoutIDs.push(
+        setTimeout(
+          this.#overtakeArrow.bind(
+            this,
+            angle,
+            magnitude * (i + 1),
+            `hsl(${this.minProjectileHue + (colourIncrement * i)}, ${this.projectileSaturation}%, ${this.projectileLight}%)`
+          ),
+          i * 100
+        )
+      )
+      angle += angleIncrement
+    }
   }
 
-  #overtakeArrow() {
-
+  #overtakeArrow(angle, magnitude, projectileColour) {
+    this.projectiles.push(
+      new AimedProjectile(
+        this.canvas,
+        this.ctx,
+        this.x,
+        this.y,
+        magnitude * Math.cos(angle),
+        magnitude * Math.sin(angle),
+        projectileColour
+      )
+    )
   }
 
   // Fires projectiles tightly but randomly spread towards the player
