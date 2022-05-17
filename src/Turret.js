@@ -284,7 +284,7 @@ export class AimedTurret extends Turret {
     // align each row (startAngle) so that it centers the target differing for odd/even row length
     const offset = Math.PI * 0.01
     const startAngle = angleFromTurretToPlayer - offset * (rowLen % 2 == 0 ? rowLen * 0.5 - 0.5 : Math.floor(rowLen * 0.5))
-    const magnitude = 1.5
+    const magnitude = 2
 
     for (let i=0; i < rowLen; i++) {
       this.projectiles.push(
@@ -343,41 +343,39 @@ export class AimedTurret extends Turret {
   }
 
   #overtakeArrowAttack() {
-    const arrowWidth = gameSettings.numAimedProjectiles // 5
-    const colourIncrement = this.projectileHueRange / arrowWidth
+    const halfArrowWidth = gameSettings.numAimedProjectiles
+    const colourIncrement = this.projectileHueRange / halfArrowWidth
     const angleFromTurretToPlayer = Math.atan2(this.player.y - this.y, this.player.x - this.x)
-    const angleIncrement = Math.PI * 0.05
+    const angleIncrement = Math.PI * 0.01
     const magnitude = 1
 
-    let angle = angleFromTurretToPlayer - (arrowWidth + 1) * angleIncrement
+    let angle = angleFromTurretToPlayer - (halfArrowWidth - 0.5) * angleIncrement
 
-    for (let i=0; i < arrowWidth; i++) {
+    for (let i=0; i < halfArrowWidth; i++) {
       this.delayedTimeoutIDs.push(
         setTimeout(
           this.#overtakeArrow.bind(
             this,
             angle,
-            magnitude * (i + 1), // * 0.1
+            magnitude + easeInQuad(i / (halfArrowWidth)),
             `hsl(${this.minProjectileHue + (colourIncrement * i)}, ${this.projectileSaturation}%, ${this.projectileLight}%)`
           ),
-          i * 100
+          i * 20
         )
       )
       angle += angleIncrement
     }
 
-    angle += angleIncrement * 2 // head
-
-    for (let i=arrowWidth-1; i >= 0; i--) {
+    for (let i=halfArrowWidth-1; i >= 0; i--) {
       this.delayedTimeoutIDs.push(
         setTimeout(
           this.#overtakeArrow.bind(
             this,
             angle,
-            magnitude * (i + 1),
+            magnitude + easeInQuad(i / halfArrowWidth),
             `hsl(${this.minProjectileHue + (colourIncrement * i)}, ${this.projectileSaturation}%, ${this.projectileLight}%)`
           ),
-          i * 100
+          i * 20
         )
       )
       angle += angleIncrement
@@ -438,4 +436,9 @@ export class AimedTurret extends Turret {
     if (this.fireTimeoutID) clearTimeout(this.fireTimeoutID)
     this.fireTimeoutID = setTimeout(this.#fireRandomAimedAttack.bind(this), 20)
   }
+}
+
+// credits to: https://easings.net
+function easeInQuad(x) {
+  return 1 + x * x * 0.4;
 }
