@@ -286,7 +286,7 @@ function drawScore() {
   const seconds = Math.round(gameSettings.totalTime/1000)
   ctx.save()
   ctx.fillStyle = 'white'
-  ctx.font = `${(canvas.width + canvas.height) * 0.01}px Play`
+  ctx.font = `${(canvas.width + canvas.height) * 0.01}px Manrope`
   ctx.shadowColor = 'white'
   ctx.shadowBlur = canvas.height * 0.005
   ctx.translate(canvas.width * 0.1, canvas.height * 0.1) // score is time in seconds alive
@@ -295,7 +295,6 @@ function drawScore() {
 }
 
 function gameLoop(timeStamp) {
-  // ctx.clearRect(0, 0, canvas.width, canvas.height)
 
   // animate background stars
   gameObjects.stars.forEach((star) => {
