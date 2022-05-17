@@ -31,20 +31,21 @@
   top: 50%;
   left: 50%;
   color: white;
-  border: 0.1vw solid white;
+  border-radius: 2%;
+  border: 0.3vw solid white;
   transform: translate(-50%, -50%);
 }
 
 #mainTitle {
   text-align: center;
   font-size: 5vw;
-  margin: 0 0 5% 0;
+  margin: 0 0 3% 0;
   filter: drop-shadow(0 0 0.1vw white);
 }
 
 #highScoreTitle {
   font-size: 1.5vw;
-  margin: 0;
+  margin: 0 0 1% 0;
   filter: drop-shadow(0 0 0.1vw white);
 }
 
@@ -66,7 +67,7 @@ ul {
 
 .menuButton {
   cursor: pointer;
-  font-size: 2vw;
+  font-size: 1.5vw;
   background: black;
   filter: drop-shadow(0 0 0.1vw white);
   color: white;
@@ -103,7 +104,7 @@ ul {
 }
 
 #infoText {
-  font-size: 1.25vw;
+  font-size: 1vw;
   padding: 0 5% 5% 5%;
   text-align: left;
   filter: drop-shadow(0 0 0.1vw white);
@@ -128,11 +129,13 @@ ul {
 }
 
 #scoreModal {
+  animation: fade-in 0.3s linear;
   padding: 3vw;
   background-color: white;
   display: flex;
   flex-direction: column;
   align-items: center;
+  border-radius: 1%;
   box-shadow: 0.5vw 0.5vw black;
 }
 
@@ -158,4 +161,14 @@ ul {
 #highScoreForm {
   display: flex;
   flex-direction: column;
+}
+
+@keyframes fade-in {
+  0% {
+    opacity: 0%;
+    transform: translateY(2.5%);
+  }
+  100% {
+    opacity: 100%
+  }
 }
