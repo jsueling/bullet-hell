@@ -248,13 +248,14 @@ function handleScore() {
   // first stop the animation
   cancelAnimationFrame(timeoutIDs.gameLoop)
   const finalScore = Math.round(gameSettings.totalTime/1000)
-   // if score beats lowest stored score (or 0 if no scores)
+  modal.style.display = 'flex'
+
+  // then show highscore form if a new record is set
   if (finalScore > (highScore.scores.length ? highScore.scores[highScore.scores.length-1].score : 0)) {
-    // then show modal for username input to save highscore
-    modal.style.display = 'flex'
+    highScoreForm.style.display = 'flex'
     modalInput.focus();
   } else {
-    endGame()
+    highScoreForm.style.display = 'none'
   }
 }
 

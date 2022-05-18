@@ -4,6 +4,10 @@
   font-family: 'Manrope', sans-serif;
 }
 
+body {
+  overflow: hidden;
+}
+
 #gameCanvas {
   cursor: none;
   position: absolute;
@@ -16,7 +20,7 @@
 
 #menuScreen {
   position: absolute;
-  overflow: auto;
+  animation: fade-in-05 0.3s linear;
   width: 100%;
   height: 100%;
   top: 0;
@@ -125,12 +129,11 @@ ul {
   top: 0;
   width: 100%;
   height: 100%;
-  overflow: auto;
   background-color: rgba(255, 255, 255, 0.2);
 }
 
 #gameoverModal {
-  animation: fade-in 0.3s linear;
+  animation: fade-in-25 0.3s linear;
   padding: 3vw;
   background-color: white;
   display: flex;
@@ -146,12 +149,15 @@ ul {
   cursor: pointer;
 }
 
+#closeModal:hover {
+  transform: scale(1.4)
+}
+
 #modalTitle {
   font-size: 2vw;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 1vw;
 }
 
 .modalItem {
@@ -160,14 +166,31 @@ ul {
 }
 
 #highScoreForm {
+  margin-top: 0.75vw;
+  padding-top: 0.75vw;
   display: flex;
   flex-direction: column;
+  border-top: 0.1vh solid black;
 }
 
-@keyframes fade-in {
+#highScoreNotification {
+  font-size: 1.5vw;
+}
+
+@keyframes fade-in-25 {
   0% {
     opacity: 0%;
     transform: translateY(2.5%);
+  }
+  100% {
+    opacity: 100%
+  }
+}
+
+@keyframes fade-in-05 {
+  0% {
+    opacity: 0%;
+    transform: translateY(0.5%);
   }
   100% {
     opacity: 100%

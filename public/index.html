@@ -8,12 +8,13 @@
   <body>
     <canvas id="gameCanvas"></canvas>
     <div class="modal">
-      <div id="scoreModal">
+      <div id="gameoverModal">
         <div id="modalTitle">
-          <span>New High Score!</span>
+          <span>Game Over!</span>
           <span id="closeModal">&times;</span>
         </div>
         <form id="highScoreForm">
+          <span id="highScoreNotification">New High Score!</span>
           <label for="modalInput" class="modalItem">Enter your name:</label>
           <input class="modalItem" id="modalInput" required />
           <button type="submit" class="menuButton" >Submit</button>
