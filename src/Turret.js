@@ -4,13 +4,14 @@ import { gameSettings } from './index.js'
 import redParticleSheet from '../assets/redTurretParticles2.png'
 import greenParticleSheet from '../assets/greenTurretParticles4.png'
 import aimedBarrelSprite from '../assets/aimedBarrel.png'
+import radialBarrelSprite from '../assets/radialBarrel.png'
 
 const aimedBarrel = new Image()
 aimedBarrel.src = aimedBarrelSprite
-
 const aimedTurGlow = new Image()
 aimedTurGlow.src = greenParticleSheet
-
+const radialBarrel = new Image()
+radialBarrel.src = radialBarrelSprite
 const radialTurGlow = new Image()
 radialTurGlow.src = redParticleSheet
 
@@ -58,7 +59,7 @@ class Turret {
 export class RadialTurret extends Turret {
   constructor(canvas, ctx, projectiles) {
     super(canvas, ctx, projectiles)
-    this.colour = '#f17479'
+    this.colour = '#eb3339'
     let turretSpeed = this.canvas.height * (Math.random() * 0.00025 + 0.00025)
     // if hardMode enabled, change turretSpeed 50% of the time
     if (gameSettings.hardMode && Math.random() < 0.5) turretSpeed = this.canvas.height * (Math.random() * 0.005 + 0.005)
@@ -72,7 +73,7 @@ export class RadialTurret extends Turret {
     ]
     this.projectileColours = [
       'red',
-      'magenta',
+      'orange',
       'pink'
     ]
   }
@@ -84,25 +85,16 @@ export class RadialTurret extends Turret {
     this.ctx.shadowColor = this.colour
     this.ctx.shadowBlur = this.canvas.height * 0.005
 
+    // trail
     this.ctx.fillStyle = this.colour
-    // https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/drawImage
     this.ctx.drawImage(radialTurGlow, this.spriteOffset, 0, 200, 400, -this.spriteSize * 2, -this.spriteSize * 6, this.spriteSize * 4, this.spriteSize * 8)
+
     this.ctx.beginPath()
     this.ctx.arc(0, 0, this.radius, 0, 2 * Math.PI)
     this.ctx.fill()
 
-    this.ctx.restore()
-  }
-
-  drawBarrel() {
-    this.ctx.save()
-
-    this.ctx.translate(this.x, this.y)
-
-    this.ctx.fillStyle = '#7d0c10'
-    this.ctx.beginPath()
-    this.ctx.arc(0, 0, this.radius*0.45, 0, 2*Math.PI)
-    this.ctx.fill()
+    // barrel
+    this.ctx.drawImage(radialBarrel, -this.radius * 2, -this.radius * 2, this.radius * 4, this.radius * 4)
 
     this.ctx.restore()
   }
@@ -200,7 +192,7 @@ export class AimedTurret extends Turret {
   constructor(canvas, ctx, projectiles, player) {
     super(canvas, ctx, projectiles)
     this.player = player
-    this.colour = '#4caf50'
+    this.colour = '#74f178'
     this.velY = canvas.height * (Math.random() * 0.0005 + 0.0005) // velocity varying between 0.05 to 0.1 % of canvas height
     this.projectileLight = 73
     this.minProjectileHue = 80

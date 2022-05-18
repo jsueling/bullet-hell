@@ -18,7 +18,7 @@ export class Player {
     this.y = 0,
     this.radius = canvas.height * 0.01 // Player Object size is responsive to canvas height
     this.fireIntervalID = undefined
-    this.colour = '#7dabff'
+    this.colour = '#74a0f1'
 
     this.spriteOffset = 0
     this.spriteSize = this.radius
@@ -61,8 +61,8 @@ export class Player {
     if (!gameTimers.paused) {
       const projectileColour = '#99bdff'
       gameObjects.playerProjectiles.push( // fires 2 shots upwards at L, R edge of the Player
-        new PlayerProjectile(this.canvas, this.ctx, this.x - this.radius, this.y, 0, -3, projectileColour),
-        new PlayerProjectile(this.canvas, this.ctx, this.x + this.radius, this.y, 0, -3, projectileColour),
+        new PlayerProjectile(this.canvas, this.ctx, this.x - this.radius + this.canvas.height * 0.002, this.y, 0, -3, projectileColour),
+        new PlayerProjectile(this.canvas, this.ctx, this.x + this.radius - this.canvas.height * 0.002, this.y, 0, -3, projectileColour),
       )
     }
   }

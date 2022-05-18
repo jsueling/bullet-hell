@@ -11,10 +11,10 @@ export const gameSettings = {
   totalTime: 0,
   currentRadialTurrets: 1,
   currentAimedTurrets: 1,
-  numRadialProjectiles: 5,
-  numAimedProjectiles: 5,
   maxRadialTurrets: 1,
   maxAimedTurrets: 1,
+  numRadialProjectiles: 5,
+  numAimedProjectiles: 5,
   numStars: 50,
   explosionDensity: 50,
   hardMode: false,
@@ -32,12 +32,8 @@ export const gameSettings = {
   }
 }
 
-// maxTurrets in gameSettings describes the limit of turrets that are on screen at one time,
-// which will be converged to by the actual number in gameObjects
-
-// doing the comparison: if (gameObjects.turrets.length < gameSettings.maxRadialTurrets)
-// can cause a bug if we want to delay replacement unless we immediately add the new turrets
-// because the next frame will call more setTimeouts to replace lost turrets
+// maxTurrets in gameSettings describes the limit of those turrets that are on screen at one time,
+// which will be converged to by the currentTurrets number in gameObjects
 
 export const gameObjects = {
   radialTurrets: [],
@@ -137,9 +133,10 @@ window.onblur = function() {
   gameTimers.paused = true 
 }
 
+// simplest implementation for pause out of focus (score and turrets firing depend on paused state)
 window.onfocus = function() {
-  gameTimers.paused = false // simplest implementation for pause out of focus:
-  gameTimers.oldTimeStamp = performance.now() // window lost focus but score/gameSettings.totalTime ticks up
+  gameTimers.paused = false
+  gameTimers.oldTimeStamp = performance.now()
 }
 
 window.onmousemove = function(e) {
@@ -447,11 +444,6 @@ function gameLoop(timeStamp) {
     }
   }
 
-  // barrel on top of projectiles
-  gameObjects.radialTurrets.forEach((turret) => {
-    turret.drawBarrel()
-  })
-
   // Draw and update aimed turrets/projectiles
   for (let i=0; i < gameObjects.aimedProjectiles.length; i++) {
 
@@ -515,7 +507,7 @@ function debounceIncreaseDifficulty() {
 
 // currently called every 5s starting from 10s totalTime
 function increaseDifficulty() {
-  gameSettings.difficultyCounter += 1 // increment first to prevent immediate increase to turrets and projectileCount
+  gameSettings.difficultyCounter += 1
 
   // hardMode starts at 15s
   if (gameSettings.difficultyCounter === 10) { // set hardMode after X amount of calls to increaseDifficulty
