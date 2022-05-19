@@ -31,8 +31,9 @@ export class RadialProjectile extends Projectile {
     this.frames = 0
     this.radius = canvas.height * 0.003
     switch(radialProjectileColour) {
+      // consistent theme with light and saturation https://www.w3schools.com/colors/colors_hsl.asp
       case 'red':
-        this.colours = ['hsl(0, 100%, 50%)', 'hsl(0, 100%, 60%)', 'hsl(0, 100%, 70%)', 'hsl(0, 100%, 80%)', 'hsl(0, 100%, 90%)'] // https://www.w3schools.com/colors/colors_hsl.asp
+        this.colours = ['hsl(0, 100%, 50%)', 'hsl(0, 100%, 60%)', 'hsl(0, 100%, 70%)', 'hsl(0, 100%, 80%)', 'hsl(0, 100%, 90%)']
         break
       case 'orange':
         this.colours = ['hsl(10, 82%, 50%)', 'hsl(10, 82%, 60%)', 'hsl(10, 82%, 70%)', 'hsl(10, 82%, 80%)', 'hsl(10, 82%, 90%)']

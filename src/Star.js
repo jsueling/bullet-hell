@@ -4,20 +4,20 @@ export default class Star {
     this.ctx = ctx
     this.x = Math.random() * canvas.width
     this.y = Math.random() * canvas.height
-    this.velY = canvas.height * (Math.random() * 0.0005 + 0.0005) // 0.05 to 0.1% of canvas height
-    this.radius = canvas.height * (Math.random() * 0.0009 + 0.0001) // 0.005 to 0.105% of canvas height
+    this.velY = canvas.height * (Math.random() * 0.0005 + 0.0005)
+    this.radius = canvas.height * (Math.random() * 0.0009 + 0.0001)
   }
 
   update() {
     this.y += this.velY
     if (this.y > this.canvas.height + this.radius) {
-      this.x = Math.random() * this.canvas.width // Out of bounds, assign new random x position
+      this.x = Math.random() * this.canvas.width // OOB, assign new random x position
       this.y = -this.radius
     }
   }
 
   draw() {
-    // transparent larger circle drawn behind gives bigger shadowblur https://stackoverflow.com/a/41372024
+    // transparent larger circle drawn behind with shadowblur gives larger effect https://stackoverflow.com/a/41372024
     this.ctx.save()
     this.ctx.fillStyle = 'none'
     this.ctx.shadowColor = 'white'
@@ -30,7 +30,7 @@ export default class Star {
     this.ctx.save()
     this.ctx.fillStyle = 'white'
     this.ctx.shadowColor = 'white'
-    this.ctx.shadowBlur = this.canvas.height * 0.01 // 15
+    this.ctx.shadowBlur = this.canvas.height * 0.01
     this.ctx.beginPath()
     this.ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI)
     this.ctx.fill()

@@ -111,7 +111,7 @@ window.onload = function() {
   startMenu()
 }
 
-// Once when opening the game, get and save scores from localStorage if they exist else the empty array
+// When loading the window, get and save scores from localStorage if they exist
 function getScores() {
   const highScoreString = localStorage.getItem('bulletHellHighScores')
   highScore.scores = JSON.parse(highScoreString) ?? []
@@ -133,7 +133,7 @@ window.onblur = function() {
   gameTimers.paused = true 
 }
 
-// simplest implementation for pause out of focus (score and turrets firing depend on paused state)
+// simplest implementation for pause out of focus (score increasing and turrets firing depend on paused state)
 window.onfocus = function() {
   gameTimers.paused = false
   gameTimers.oldTimeStamp = performance.now()
@@ -222,7 +222,7 @@ function startGame(e) {
   // hide menuScreen as game starts
   menuScreen.style.display = 'none'
 
-  // initialize Player fireInterval and position from click event 
+  // initialize player's fireInterval and position from click event
   player.x = e.x
   player.y = e.y
   player.startFireInterval()
@@ -236,18 +236,21 @@ function startGame(e) {
   // passed to the callback of RequestAnimationFrame, gameLoop here
   gameTimers.oldTimeStamp = performance.now()
 
-  // Specify the first timestamp passed to gameLoop and initialize it
-  // Passing performance.now() means elapsedMs always starts from 0
+  // Specify the first timestamp passed to gameLoop and initialize it.
+  // Passing performance.now() immediately means elapsedMs always starts from 0
   gameLoop(gameTimers.oldTimeStamp)
 }
 
+// end game handler
 function handleScore() {
   // first stop the animation
   cancelAnimationFrame(timeoutIDs.gameLoop)
   const finalScore = Math.round(gameSettings.totalTime/1000)
+  
+  // show game over modal
   modal.style.display = 'flex'
 
-  // then show highscore form if a new record is set
+  // show highscore form if a new record is set
   if (finalScore > (highScore.scores.length ? highScore.scores[highScore.scores.length-1].score : 0)) {
     highScoreForm.style.display = 'flex'
     modalInput.focus();
@@ -256,14 +259,14 @@ function handleScore() {
   }
 }
 
-// recieves userName from input, only stores new highScore if a name is submitted (from modal)
+// recieves userName from input as parameter, only stores new highScore if a name is submitted
 function endGame(userName) {
   ctx.clearRect(0, 0, canvas.width, canvas.height)
 
   if (userName) {
     const finalScore = Math.round(gameSettings.totalTime/1000)
     highScore.scores.push({ score: finalScore, name: userName })
-    highScore.scores.sort((a, b) => b.score - a.score) // sort
+    highScore.scores.sort((a, b) => b.score - a.score) // sort by score
     highScore.scores.splice(highScore.maxScores) // restrict maxLength
     localStorage.setItem('bulletHellHighScores', JSON.stringify(highScore.scores)) // save
   }
@@ -280,6 +283,7 @@ function resetGame() {
   startMenu()
 }
 
+// score is time in seconds alive
 function drawScore() {
   const seconds = Math.round(gameSettings.totalTime/1000)
   ctx.save()
@@ -287,7 +291,7 @@ function drawScore() {
   ctx.font = `${(canvas.width + canvas.height) * 0.01}px Manrope`
   ctx.shadowColor = 'white'
   ctx.shadowBlur = canvas.height * 0.005
-  ctx.translate(canvas.width * 0.1, canvas.height * 0.1) // score is time in seconds alive
+  ctx.translate(canvas.width * 0.1, canvas.height * 0.1)
   ctx.fillText(seconds, 0, 0)
   ctx.restore()
 }
@@ -301,7 +305,7 @@ function gameLoop(timeStamp) {
   })
 
   ctx.save()
-  ctx.fillStyle = 'rgba(0, 0, 0, 0.7)' // cheap trail effect
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.7)' // cheap trail effect, drawing over background with lower opacity
   ctx.fillRect(0, 0, canvas.width, canvas.height)
   ctx.restore()
 
@@ -313,6 +317,7 @@ function gameLoop(timeStamp) {
     gameSettings.totalTime += gameTimers.elapsedMs
   }
 
+  // calls to increase difficulty
   if (gameSettings.totalTime > 6000 && gameSettings.totalTime % 5000 < 20) {
     debounceIncreaseDifficulty()
   }
@@ -352,7 +357,7 @@ function gameLoop(timeStamp) {
       }
     }
 
-    // player projectiles colliding with aimedTurrets
+    // same as above but with aimedTurrets
     for (let j=0; j < gameObjects.aimedTurrets.length; j++) {
 
       const turret = gameObjects.aimedTurrets[j]
@@ -371,10 +376,11 @@ function gameLoop(timeStamp) {
 
   player.draw()
 
-  // particles for destroyed turret explosion animation
+  // animate particles from destroyed turret
   for (let i=0; i < gameObjects.explosionParticles.length; i++) {
 
     const particle = gameObjects.explosionParticles[i]
+    // update will fade these particles out in size and opacity
     particle.update()
     particle.draw()
     // remove particles that have faded out enough
@@ -390,8 +396,8 @@ function gameLoop(timeStamp) {
     // store number of replacements needed
     const replacements = gameSettings.maxRadialTurrets - gameSettings.currentRadialTurrets
 
-    // creates all turrets needed for replacement after some timer
-    createTurret(replacements, 5000, 'radial') // adjust respawn rate with difficulty
+    // creates all turrets needed for replacement
+    createTurret(replacements, 5000, 'radial')
 
     // Prevent re-entering this conditional on next frame, replacements have been ordered
     gameSettings.currentRadialTurrets = gameSettings.maxRadialTurrets
@@ -432,14 +438,14 @@ function gameLoop(timeStamp) {
 
     const prj = gameObjects.radialProjectiles[i]
     prj.update()
-    if (circleCollides(player, prj)) { // check collision for each radialProjectile with Player object which ends the game
-      handleScore()
+    if (circleCollides(player, prj)) { // check collision between each radialProjectile and the player
+      handleScore() // ends game
       return
     }
     prj.draw()
 
-    if (prj.x < -prj.radius || prj.x > canvas.width + prj.radius || prj.y < -prj.radius || prj.y > canvas.height + prj.radius) { // OOB
-      gameObjects.radialProjectiles.splice(i, 1) // removes projectiles outside of screen
+    if (prj.x < -prj.radius || prj.x > canvas.width + prj.radius || prj.y < -prj.radius || prj.y > canvas.height + prj.radius) { // if OOB
+      gameObjects.radialProjectiles.splice(i, 1) // removes projectiles outside of the screen
       i--
     }
   }
@@ -449,14 +455,14 @@ function gameLoop(timeStamp) {
 
     const prj = gameObjects.aimedProjectiles[i]
     prj.update()
-    if (circleCollides(player, prj)) { // check collision for each aimedProjectile with Player object
-      handleScore()
+    if (circleCollides(player, prj)) { // check collision between each aimedProjectile and the player
+      handleScore() // ends game
       return
     }
     prj.draw()
 
-    if (prj.x < -prj.radius || prj.x > canvas.width + prj.radius || prj.y < -prj.radius || prj.y > canvas.height + prj.radius) { // OOB
-      gameObjects.aimedProjectiles.splice(i, 1) // remove projectiles outside of screen
+    if (prj.x < -prj.radius || prj.x > canvas.width + prj.radius || prj.y < -prj.radius || prj.y > canvas.height + prj.radius) { // if OOB
+      gameObjects.aimedProjectiles.splice(i, 1) // remove projectiles outside of the screen
       i--
     }
   }
@@ -466,6 +472,7 @@ function gameLoop(timeStamp) {
     turret.draw()
   })
 
+  // store requestID
   timeoutIDs.gameLoop = window.requestAnimationFrame(gameLoop)
 }
 
@@ -478,8 +485,8 @@ function circleCollides (A, B) { // returns boolean based on whether circle obje
   return false
 }
 
-function createTurret(num, idleTime, turretType) { // creates turrets after some idleTime
-  for (let i=0; i < num; i++) {
+function createTurret(numTurrets, idleTime, turretType) { // creates turrets after some idleTime
+  for (let i=0; i < numTurrets; i++) {
     // random time offset from 0 to 50% of initial idleTime
     const randomTimeOffset = Math.floor((idleTime * 0.5) * Math.random())
     timeoutIDs.createTurrets.push(
@@ -509,12 +516,12 @@ function debounceIncreaseDifficulty() {
 function increaseDifficulty() {
   gameSettings.difficultyCounter += 1
 
-  // hardMode starts at 15s
-  if (gameSettings.difficultyCounter === 10) { // set hardMode after X amount of calls to increaseDifficulty
+  // hardMode starts at 60s
+  if (gameSettings.difficultyCounter === 11) {
     gameSettings.hardMode = true
   }
 
-  // 60, 160, 260, 360
+  // 60, 115, 170, 225
   if (gameSettings.difficultyCounter % 11 === 0) {
     gameSettings.maxAimedTurrets += 1
     gameSettings.maxRadialTurrets += 1

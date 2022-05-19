@@ -16,7 +16,7 @@ export class Player {
     this.ctx = ctx
     this.x = 0,
     this.y = 0,
-    this.radius = canvas.height * 0.01 // Player Object size is responsive to canvas height
+    this.radius = canvas.height * 0.01 // responsive size
     this.fireIntervalID = undefined
     this.colour = '#74a0f1'
 
@@ -28,21 +28,22 @@ export class Player {
   draw() {
     this.ctx.save()
     this.ctx.translate(this.x, this.y)
+    // barrels
     this.ctx.drawImage(playerBarrels, -this.radius * 2, -this.radius * 2, this.radius * 4, this.radius * 4)
-    this.ctx.restore()
 
-    this.ctx.save()
-    this.ctx.translate(this.x, this.y)
+    // trail
+    this.ctx.drawImage(playerGlow, this.spriteOffset, 0, 200, 400, -this.spriteSize * 2, -this.spriteSize * 2, this.spriteSize * 4, this.spriteSize * 8)
+    
     this.ctx.fillStyle = this.colour
 
     this.ctx.shadowColor = this.colour
     this.ctx.shadowBlur = this.canvas.height * 0.004
 
-    this.ctx.drawImage(playerGlow, this.spriteOffset, 0, 200, 400, -this.spriteSize * 2, -this.spriteSize * 2, this.spriteSize * 4, this.spriteSize * 8)
-
+    // circle
     this.ctx.beginPath()
     this.ctx.arc(0, 0, this.radius, 0, 2 * Math.PI)
     this.ctx.fill()
+
     this.ctx.restore()
 
     if (this.spriteCounter % 12 === 0) { // cycle sprite sheet

@@ -19,17 +19,15 @@ export default class Particle {
   }
 
   draw() {
-    const ctx = this.ctx
-    const canvas = this.canvas
-    ctx.save()
-    ctx.translate(this.x, this.y)
-    ctx.globalAlpha = this.opacity
-    ctx.shadowBlur = canvas.height * 0.01
-    ctx.shadowColor = this.colour
-    ctx.fillStyle = this.colour
-    ctx.beginPath()
-    ctx.arc(0, 0, this.radius, 0, 2 * Math.PI)
-    ctx.fill()
-    ctx.restore()
+    this.ctx.save()
+    this.ctx.translate(this.x, this.y)
+    this.ctx.globalAlpha = this.opacity
+    this.ctx.shadowBlur = this.canvas.height * 0.01
+    this.ctx.shadowColor = this.colour
+    this.ctx.fillStyle = this.colour
+    this.ctx.beginPath()
+    this.ctx.arc(0, 0, this.radius, 0, 2 * Math.PI)
+    this.ctx.fill()
+    this.ctx.restore()
   }
 }
