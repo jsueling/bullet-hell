@@ -33,7 +33,7 @@ export const gameSettings = {
 }
 
 // maxTurrets in gameSettings describes the limit of those turrets that are on screen at one time,
-// which will be converged to by the currentTurrets number in gameObjects
+// which will be converged to by the currentTurrets number in gameSettings
 
 export const gameObjects = {
   radialTurrets: [],

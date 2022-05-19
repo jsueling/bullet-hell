@@ -18,6 +18,10 @@ module.exports = {
         test: /\.css$/i,
         use: [MiniCssExtractPlugin.loader, "css-loader"],
       },
+      {
+        test: /\.(png|jpe?g|gif)$/i,
+        loader: 'file-loader',
+      },
     ],
   },
   optimization: {
@@ -28,9 +32,8 @@ module.exports = {
   },
   plugins: [
     new HtmlWebpackPlugin({
+      favicon: './assets/favicon.ico',
       template: './public/index.html',
-      // favicon: 'assets/favicon.ico',
-      // title: TODO
     }),
     new MiniCssExtractPlugin()
   ]
