@@ -1,42 +1,63 @@
+# Bullet Hell
 
-Bullet hell themed game built with HTML, CSS, Javascript and bundled with Webpack. The difficulty increases with time spent alive which increases the number of enemies, projectiles and types of attack. The game ends when the difficulty is too high for the player. The goal is to beat your personal highscore which is based on time spent alive.
+A classic bullet hell style game built from scratch using HTML, CSS, and JavaScript. The objective is to survive as long as possible by dodging an ever-increasing barrage of projectiles from enemy turrets. Your score is based on your survival time, with high scores saved locally in your browser.
 
-Live Demo: https://bullet-hell.netlify.app/
-<hr>
+[**Live Demo**](https://bullet-hell.netlify.app/)
+
 <div align="center">
-  <img src="https://github.com/jamessl154/bullet-hell/assets/64977718/e6b66d41-1de0-4d8c-b2a3-6d52b6ed2857" alt="bullet hell gif" />
+  <img src="https://github.com/jamessl154/bullet-hell/assets/64977718/e6b66d41-1de0-4d8c-b2a3-6d52b6ed2857" alt="bullet hell gameplay gif" />
 </div>
-<hr>
 
-## File Description
+## Features
 
-- **index.js** contains the core game logic that uses the Web APIs `HTMLCanvasElement.getContext("2d")` and `window.requestAnimationFrame()` for 2D animation
-- **index.html** contains the HTML skeleton with our canvas element
-- **Particle.js** contains the class for each object created from the explosion when an enemy is destroyed
-- **Player.js** contains the class representing the player's ship
-- **Projectile.js** contains the class for instantiating projectile objects
-- **Star.js** contains the implementation for stars that give the effect of moving through space
-- **Turret.js** contains the Turret class and the implementation of the two types of turrets and their firing methods
-- **/assets** contains sprite sheets and turrets made by me
-- **/utils/fullScreen.js** contains the implementation for toggling full screen depending on the web browser copied from [here](https://www.w3schools.com/jsref/event_fullscreenchange.asp)
+- **Endless Gameplay:** Survive as long as you can against waves of enemies.
+- **Dynamic Difficulty:** The game gets harder over time, with more enemies, faster projectiles, and complex attack patterns.
+- **Two Enemy Types:** Face off against Radial Turrets with area-denial attacks and Aimed Turrets that target the player directly.
+- **High Score System:** Compete against yourself with a persistent high score board saved via `localStorage`.
+- **Responsive Design:** The game canvas and UI adapt to any screen size.
+- **Visual Effects:** Features particle explosions and smooth animations powered by `requestAnimationFrame`.
 
-## How to run
+## Built With
 
-Requires [git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git) and [npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm)
+- HTML5
+- CSS3
+- JavaScript (ES6+)
+- Webpack
 
-```
-# clone this repository
-git clone https://github.com/jamessl154/bullet-hell.git
+## Getting Started
 
-# navigate to the directory
-cd bullet-hell
+To get a local copy up and running, follow these simple steps.
 
-# install dependencies
-npm install
+### Prerequisites
 
-# opens the app locally with webpack-dev-server for development
-npm start
+You'll need [Node.js](https://nodejs.org/en/) (which includes npm) and [Git](https://git-scm.com/) installed on your machine.
 
-# builds the code for production into the ./dist directory ready for deployment to a server
-npm run build
-```
+### Installation & Usage
+
+1.  Clone the repository:
+    ```sh
+    git clone https://github.com/jamessl154/bullet-hell.git
+    ```
+2.  Navigate to the project directory:
+    ```sh
+    cd bullet-hell
+    ```
+3.  Install NPM packages:
+    ```sh
+    npm install
+    ```
+4.  Start the development server:
+    ```sh
+    npm start
+    ```
+    This will open the game in your default browser.
+
+5.  To create a production build:
+    ```sh
+    npm run build
+    ```
+    This bundles the application into the `/dist` directory, ready for deployment.
+
+## Acknowledgements
+
+-   The fullscreen toggle implementation is adapted from [W3Schools](https://www.w3schools.com/jsref/event_fullscreenchange.asp).
