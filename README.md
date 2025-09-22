@@ -36,7 +36,7 @@ You'll need [Node.js](https://nodejs.org/en/) (which includes npm) and [Git](htt
 
 1.  Clone the repository:
     ```sh
-    git clone https://github.com/jamessl154/bullet-hell.git
+    git clone https://github.com/jsueling/bullet-hell.git
     ```
 2.  Navigate to the project directory:
     ```sh
